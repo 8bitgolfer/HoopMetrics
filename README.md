@@ -111,3 +111,6 @@ The Render Blueprint should sync the new environment variable names. After the s
 Gemini has a **limited free tier**, subject to provider limits and eligibility; do not enable billing if you want to stay on the free tier. Free-tier input may be used by Google to improve products under its stated policies. A publicly accessible chatbot may exhaust free usage limits quickly. If the provider rate limit is exceeded, the backend will return an error; it will not silently switch to a paid model.
 
 Older OpenAI-specific instructions earlier in this README are superseded by this Gemini configuration.
+
+### Model availability fix (November 8, 2026)
+Google restricts Gemini 2.5 Flash for new API projects. Use `GEMINI_MODEL=gemini-3.5-flash-lite` on Render instead. The model supports function calling and has a limited free API tier. Render Blueprint synchronization should apply the latest `render.yaml` value; manually check the Render Environment page if it still says `gemini-2.5-flash`. The `/health` endpoint reports the model loaded by the current server process.
