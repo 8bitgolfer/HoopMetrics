@@ -135,6 +135,28 @@ const server=http.createServer(async(req,res)=>{
  if(typeof message!=="string"||!message.trim()||message.length>1200)return json(res,400,{error:"Please send a question up to 1200 characters."},ORIGIN);
  const answer=await runChat(message,Array.isArray(body.history)?body.history:[]);
  return json(res,200,{answer},ORIGIN)
- }catch(error){console.error("HoopMetrics AI error:",error.message);return json(res,500,{error:"AI request failed. Please retry or check server configuration."},ORIGIN)}
+ }catch(error){
+  const status=Number(error?.status||error?.code)||500;
+  const providerMessage=String(error?.message||"");
+  const lower=providerMessage.toLowerCase();
+  // Do not leak API credentials, provider request bodies, or user questions to the browser.
+  let publicError="The AI provider rejected the request. Check the Render Logs for details.";
+  let outStatus=502;
+  if(status===401||status===403||/api key not valid|api_key_invalid|permission denied|unauthenticated|api key expired/.test(lower)){
+    publicError="Gemini authentication failed. Check GEMINI_API_KEY in Render Environment and redeploy.";outStatus=502;
+  }else if(status===429||/quota exceeded|resource exhausted|rate limit/.test(lower)){
+    publicError="Gemini free-tier quota or rate limit reached. Check Google AI Studio usage and try later.";outStatus=429;
+  }else if(status===404||/model not found|model .* not supported/.test(lower)){
+    publicError="Gemini model unavailable. Check GEMINI_MODEL in Render and your API model access.";outStatus=502;
+  }else if(status===400||/invalid argument|function calling|tool call|function declaration/.test(lower)){
+    publicError="Gemini rejected the request format (model/tool compatibility). Check Render Logs for the provider error.";outStatus=502;
+  }else if(/nba source unavailable|fetch failed/.test(lower)){
+    publicError="The 2025–26 NBA data source could not be loaded. Retry shortly.";outStatus=503;
+  }else if(/timeout|timed out|aborted/.test(lower)){
+    publicError="The AI provider or NBA data request timed out. Try again.";outStatus=504;
+  }
+  console.error("HoopMetrics AI provider failure:",{status,code:error?.code,type:error?.type,message:providerMessage.slice(0,450)});
+  return json(res,outStatus,{error:publicError},ORIGIN);
+ }
 });
 server.listen(PORT,"0.0.0.0",()=>console.log("HoopMetrics AI listening on",PORT));
