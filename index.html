@@ -1,133 +1,41 @@
 <!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#0b1017"><title>HoopMetrics | NBA Advanced Statistics</title>
-<style>
-:root{font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;color:#edf4f7;background:#0b1017;font-synthesis:none}
-*{box-sizing:border-box}body{margin:0}header,main{max-width:1250px;margin:auto;padding:24px}
-header{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #26323d}
-.brand{font-weight:850;font-size:24px;letter-spacing:-1px}.brand span{color:#65dfad}.tag{color:#8294a4;font-size:12px;font-weight:650;letter-spacing:1.2px}
-h1{font-size:clamp(42px,7vw,76px);letter-spacing:-3px;line-height:1.02;margin:12px 0}h1 em{font-style:normal;color:#65dfad}
-.hero{padding:42px 0 28px}.eyebrow{color:#65dfad;font-size:12px;font-weight:750;letter-spacing:2px}
-p{color:#96a7b6;line-height:1.65;max-width:670px}.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:20px 0 30px}
-.card{border:1px solid #293746;background:#131d27;padding:22px;border-radius:14px}.card small{display:block;color:#8fa5b5;font-size:11px;letter-spacing:1px;text-transform:uppercase}
-.card strong{display:block;font-size:35px;margin-top:8px;font-variant-numeric:tabular-nums}
-.controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:16px 0}.controls input[type="search"]{flex:1;min-width:180px}
-.filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:14px 0 20px}
-.filter{display:flex;flex-direction:column;gap:7px}.filter label{font-size:12px;color:#aabccc;font-weight:700}
-.filter select{width:100%}
-.custom-line{display:flex;gap:6px}.custom-line select{width:100%}.custom-line input{width:100%;min-width:0}
-.toggle{padding:9px 11px;font-size:12px;white-space:nowrap;background:#20313c}.toggle[aria-pressed="true"]{border-color:#65dfad;color:#65dfad}
-.hidden{display:none!important}
-
-input,select,button{font:inherit;border-radius:9px;padding:11px 12px;border:1px solid #344552;background:#14202a;color:#eaf3fa}
-button{cursor:pointer}button:hover{border-color:#65dfad}button:disabled{opacity:.35;cursor:default}
-.tablewrap{overflow:auto;border:1px solid #293746;border-radius:13px}table{border-collapse:collapse;width:100%;min-width:790px}
-th,td{padding:13px 15px;text-align:right;border-bottom:1px solid #20303c;white-space:nowrap;font-variant-numeric:tabular-nums}
-th{background:#15212c;color:#9cafbe;font-size:12px;cursor:pointer;user-select:none}th:hover{color:#65dfad}
-td{font-size:14px}th:first-child,td:first-child{text-align:left}tbody tr:hover{background:#172430}.player{font-weight:720}
-.good{color:#65dfad}.bad{color:#f18c91}.average{color:#d3e4ef}
-.bottom{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:16px 0 38px;color:#9dafbe}
-.note{border:1px solid #2b3b46;background:#111b24;border-radius:12px;padding:20px;font-size:13px;color:#9eafbc;line-height:1.7}
-.note a{color:#65dfad}#status{font-size:14px;color:#a0afbe;margin:10px 0}.error{color:#f18c91!important}
-@media(max-width:640px){header,main{padding:17px}.cards{grid-template-columns:1fr}.card strong{font-size:28px}.tag{display:none}h1{letter-spacing:-2px}}
-</style>
-</head>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0A1018"><meta name="description" content="HoopMetrics — discover NBA player efficiency, creation, defense and impact through advanced analytics.">
+<title>HoopMetrics · NBA Analytics</title><link rel="stylesheet" href="./styles.css" defer></head>
 <body>
-<header><div class="brand">HOOP<span>METRICS</span>.</div><div class="tag">BEYOND THE BOX SCORE</div></header>
-<main>
-<section class="hero"><div class="eyebrow">2025–26 • REGULAR SEASON</div><h1>TRUE SHOOTING <em>+</em></h1><p>NBA scoring efficiency standardized to the league. <strong style="color:#edf4f7">TS+ = 100</strong> is exactly league average; above 100 is more efficient, below 100 is less efficient.</p></section>
-<section class="cards"><div class="card"><small>League TS% baseline</small><strong>58.1%</strong></div><div class="card"><small>Average TS+ benchmark</small><strong>100</strong></div><div class="card"><small>Players in dataset</small><strong id="count">—</strong></div></section>
-<h2>Player leaderboard</h2><div class="controls"><input id="search" placeholder="Search player or team…" aria-label="Search players"><select id="team"><option value="">All teams</option></select><select id="minimum"><option value="0">All games played</option><option value="10">10+ games</option><option value="25">25+ games</option><option value="41">41+ games</option><option value="58">58+ games</option></select><button id="export">Export CSV ↓</button></div>
+<header class="topbar"><a href="#" class="logo" aria-label="HoopMetrics homepage">HOOP<span>METRICS</span><i>.</i></a><div class="topright"><span class="live-dot"></span>2025–26 REGULAR SEASON <span class="version">ADVANCED ANALYTICS</span></div></header>
+<div class="shell">
+<aside class="sidebar"><div class="rail-label">WORKSPACE</div><nav id="nav" aria-label="Dashboard sections">
+<button class="navitem selected" data-view="explore">◫ <span>Explore players</span></button>
+<button class="navitem" data-view="compare">⇄ <span>Compare players</span></button>
+<button class="navitem" data-view="assistant">✦ <span>Stats assistant</span></button>
+<button class="navitem" data-view="method">≋ <span>Methodology</span></button>
+</nav><div class="rail-foot"><div class="foot-icon">◎</div><b>Numbers with context.</b><p>Explore the complete 2025–26 NBA regular season.</p></div></aside>
+<main class="main">
+<div class="view active" id="view-explore">
+<div class="eyebrow">THE DATA LAB <span class="slash">/</span> PLAYER ANALYTICS</div>
+<div class="page-heading"><div><h1>Beyond the <em>box score.</em></h1><p>Explore who scores efficiently, creates offense, protects possessions, and makes an impact.</p></div><button class="ghost-btn" id="export">↓ Export CSV</button></div>
+<section class="kpis"><div class="kpi"><label>LEAGUE TRUE SHOOTING</label><strong>58.1<span>%</span></strong><small>TS+ baseline = 100</small></div><div class="kpi"><label>LEAGUE EFFECTIVE FG</label><strong>54.6<span>%</span></strong><small>eFG+ baseline = 100</small></div><div class="kpi"><label>PLAYER DATABASE</label><strong id="totalCount">—</strong><small>2025–26 NBA players</small></div><div class="kpi featured"><label>HOOPMETRICS ASSISTANT</label><strong>✦ Ask the data</strong><small>Try “90th percentile scoring efficiency”</small><button id="kpiChat" class="text-link">Open assistant ↗</button></div></section>
+<section class="panel"><div class="panel-head"><div><h2>Player leaderboard</h2><p>Pick a category. Sort any column, combine filters, or open a detailed player profile.</p></div><div class="info-pill" id="resultsCount">Loading players…</div></div>
+<div class="category-tabs" role="tablist" aria-label="Statistic category"><button class="tab active" data-cat="scoring">◎ Scoring</button><button class="tab" data-cat="playmaking">↗ Playmaking</button><button class="tab" data-cat="defense">⬡ Defense</button><button class="tab" data-cat="impact">◇ Impact</button></div>
+<div class="filter-shelf"><div class="filter-head"><b>Filters</b><button class="quiet-btn" id="resetFilters">↺ Reset</button></div>
 <div class="filters">
-<div class="filter"><label for="position">Position</label><select id="position"><option value="">All positions</option><option>PG</option><option>SG</option><option>SF</option><option>PF</option><option>C</option><option value="guards">Guards (PG / SG)</option><option value="wings">Wings (SG / SF)</option><option value="bigs">Bigs (PF / C)</option></select></div>
-<div class="filter"><label for="role">Player role (games started %)</label><select id="role"><option value="">All roles</option><option value="full">Full-time starter (80%+)</option><option value="mostly">Mostly starter (50–79.9%)</option><option value="hybrid">Hybrid (20–49.9%)</option><option value="mostlybench">Mostly bench (1–19.9%)</option><option value="bench">Bench only (0%)</option></select></div>
-<div class="filter"><label for="ppg">Points per game</label><div class="custom-line"><select id="ppg"><option value="">Any PPG</option><option value="5">5+ PPG</option><option value="10">10+ PPG</option><option value="15">15+ PPG</option><option value="20">20+ PPG</option><option value="25">25+ PPG</option><option value="30">30+ PPG</option></select><button id="ppgToggle" class="toggle" type="button" aria-pressed="false" title="Enter a custom decimal PPG threshold">Custom</button></div><div id="ppgCustom" class="custom-line hidden"><select id="ppgOp" aria-label="PPG comparison"><option value="gte">At least</option><option value="lte">At most</option><option value="eq">Approximately</option></select><input id="ppgExact" aria-label="Custom PPG" type="number" min="0" max="100" step="0.1" placeholder="e.g. 23.5"></div></div>
-<div class="filter"><label for="usage">Usage rate (USG%)</label><div class="custom-line"><select id="usage"><option value="">Any usage</option><option value="0:15">Under 15%</option><option value="15:20">15–19.9%</option><option value="20:25">20–24.9%</option><option value="25:30">25–29.9%</option><option value="30:999">30%+</option></select><button id="usageToggle" class="toggle" type="button" aria-pressed="false" title="Enter a custom decimal usage threshold">Custom</button></div><div id="usageCustom" class="custom-line hidden"><select id="usageOp" aria-label="Usage comparison"><option value="gte">At least</option><option value="lte">At most</option><option value="eq">Approximately</option></select><input id="usageExact" aria-label="Custom usage percentage" type="number" min="0" max="100" step="0.1" placeholder="e.g. 27.8"></div></div>
+<label>Search player or team<input id="search" type="search" placeholder="e.g. Nikola Jokić"></label>
+<label>Team<select id="team"><option value="">All teams</option></select></label>
+<label>Position<select id="position"><option value="">All positions</option><option>PG</option><option>SG</option><option>SF</option><option>PF</option><option>C</option><option value="guards">Guards</option><option value="wings">Wings</option><option value="bigs">Bigs</option></select></label>
+<label>Player role<select id="role"><option value="">All roles</option><option value="full">Full-time starter (80%+)</option><option value="mostly">Mostly starter (50–79.9%)</option><option value="hybrid">Hybrid (20–49.9%)</option><option value="mostlybench">Mostly bench (1–19.9%)</option><option value="bench">Bench only (0%)</option></select></label>
+<label>Minimum games<select id="games"><option value="0">No minimum</option><option value="10">10+ games</option><option value="25">25+ games</option><option value="41" selected>41+ games</option><option value="58">58+ games</option></select></label>
+<label>Minimum TSA<select id="tsa"><option value="0">No minimum</option><option value="100">100+ attempts</option><option value="300">300+ attempts</option><option value="500">500+ attempts</option><option value="800">800+ attempts</option></select></label>
+<div class="filter-field"><label for="ppg">Points per game</label><div class="filter-line"><select id="ppg"><option value="">Any PPG</option><option value="10">10+</option><option value="15">15+</option><option value="20">20+</option><option value="25">25+</option><option value="30">30+</option></select><button class="custom-btn" id="ppgToggle" aria-pressed="false">Custom</button></div><div class="custom-entry hidden" id="ppgCustom"><select id="ppgOp" aria-label="PPG operator"><option value="gte">At least</option><option value="lte">At most</option><option value="eq">Approx.</option></select><input id="ppgExact" aria-label="Custom PPG value" type="number" min="0" step="0.1" placeholder="23.5"></div></div>
+<div class="filter-field"><label for="usage">Usage rate</label><div class="filter-line"><select id="usage"><option value="">Any USG%</option><option value="0:15">Under 15%</option><option value="15:20">15–19.9%</option><option value="20:25">20–24.9%</option><option value="25:30">25–29.9%</option><option value="30:999">30%+</option></select><button class="custom-btn" id="usageToggle" aria-pressed="false">Custom</button></div><div class="custom-entry hidden" id="usageCustom"><select id="usageOp" aria-label="Usage operator"><option value="gte">At least</option><option value="lte">At most</option><option value="eq">Approx.</option></select><input id="usageExact" aria-label="Custom usage rate" type="number" min="0" step="0.1" placeholder="27.8"></div></div>
+</div></div>
+<div class="table-scroll"><table><thead id="tableHead"></thead><tbody id="tableBody"></tbody></table></div>
+<div class="table-foot"><div id="tableStatus">Fetching NBA data…</div><div class="pager"><button id="prev">← Previous</button><span id="pageLabel">—</span><button id="next">Next →</button></div></div></section>
+<div class="bottom-note">ⓘ Percentiles use a qualified comparison pool (41+ games and 500+ estimated true shooting attempts by default). Defensive box-score metrics are not comprehensive measures of defensive ability.</div>
 </div>
-<div id="status">Loading 2025–26 season data…</div>
-<div class="tablewrap"><table><thead><tr><th data-k="name">Player</th><th data-k="team">Team</th><th data-k="pos">Pos</th><th data-k="games">GP</th><th data-k="starts">GS</th><th data-k="mpg">MPG</th><th data-k="points">PPG</th><th data-k="usage">USG%</th><th data-k="fga">FGA</th><th data-k="fta">FTA</th><th data-k="ts">TS%</th><th data-k="plus">TS+ ↓</th><th data-k="diff">vs league (pp)</th></tr></thead><tbody id="rows"></tbody></table></div>
-<div class="bottom"><span id="shown">—</span><div><button id="prev">← Prev</button> <span id="page"></span> <button id="next">Next →</button></div></div>
-<section class="note"><b>Methodology.</b> TS% = PTS / [2 × (FGA + 0.44 × FTA)]. TS+ = 100 × (player TS% / league TS%). 2025–26 league TS% baseline: 58.1%. TS+ is a relative index, not a shooting percentage. The 0.44 factor estimates free-throw possessions. Role bands use games-started percentage, and actual usage rate comes from the 2025–26 advanced player data. Custom decimal comparisons use displayed per-game / usage precision. This version derives TS% from rounded per-game source data, so values can differ slightly from precise season-total calculations. Traded players are deduplicated to their combined-season row where provided. Low-sample outliers are included unless filtered. <a href="https://github.com/Baileyd18/NBA-Player-Impact-and-Value-Dashboard-2025-26" target="_blank" rel="noopener">Player data source</a> · <a href="https://www.basketball-reference.com/leagues/NBA_stats_per_game.html" target="_blank" rel="noopener">League baseline source</a>. Unofficial fan project.</section>
-</main>
-<script>
-const DATA_URL="https://raw.githubusercontent.com/Baileyd18/NBA-Player-Impact-and-Value-Dashboard-2025-26/main/Data/raw_per_game.csv";
-const ADVANCED_URL="https://raw.githubusercontent.com/Baileyd18/NBA-Player-Impact-and-Value-Dashboard-2025-26/main/Data/raw_advanced.csv";
-const BASELINE=.581,PER_PAGE=40;
-let players=[],shown=[],key="plus",desc=true,page=0;
-const el=id=>document.getElementById(id);
-const num=v=>Number(v)||0;
-function parseCSV(csv){
-  const rows=[];let row=[],cell="",quote=false;
-  for(let i=0;i<csv.length;i++){const c=csv[i];if(quote){if(c==='"'&&csv[i+1]==='"'){cell+='"';i++}else if(c==='"')quote=false;else cell+=c}else if(c==='"')quote=true;else if(c===','){row.push(cell);cell=""}else if(c==='\n'){row.push(cell.replace(/\r$/,""));rows.push(row);row=[];cell=""}else cell+=c}
-  if(cell||row.length){row.push(cell);rows.push(row)}
-  const header=rows.shift();return rows.filter(r=>r.length===header.length).map(r=>Object.fromEntries(header.map((h,i)=>[h,r[i]])));
-}
-function render(){
-  const start=page*PER_PAGE;const fragment=document.createDocumentFragment();
-  for(const p of shown.slice(start,start+PER_PAGE)){
-    const tr=document.createElement("tr");
-    const fields=[p.name,p.team,p.pos,p.games,p.starts,p.mpg.toFixed(1),p.points.toFixed(1),p.usage===null?"—":p.usage.toFixed(1)+"%",p.fga.toFixed(1),p.fta.toFixed(1),p.ts===null?"—":(100*p.ts).toFixed(1)+"%",p.plus===null?"—":p.plus.toFixed(1),p.diff===null?"—":(p.diff>=0?"+":"")+p.diff.toFixed(1)];
-    fields.forEach((v,i)=>{const td=document.createElement("td");td.textContent=v;if(i===0)td.className="player";if(i===11||i===12)td.className=p.diff===null?"average":p.diff>0?"good":p.diff<0?"bad":"average";tr.appendChild(td)});
-    fragment.appendChild(tr)
-  }
-  el("rows").replaceChildren(fragment);
-  el("shown").textContent=shown.length.toLocaleString()+" players • showing "+(shown.length?start+1:0)+"–"+Math.min(start+PER_PAGE,shown.length);
-  el("page").textContent=(page+1)+" / "+Math.max(1,Math.ceil(shown.length/PER_PAGE));
-  el("prev").disabled=page===0;el("next").disabled=(page+1)*PER_PAGE>=shown.length;
-}
-function matchesNumeric(value,threshold,op){if(value===null||!Number.isFinite(value))return false;return op==="lte"?value<=threshold+1e-9:op==="eq"?Math.abs(value-threshold)<.05:value>=threshold-1e-9}
-function roleMatch(p,role){if(!role)return true;if(!p.games)return false;const rate=100*p.starts/p.games;return role==="full"?rate>=80:role==="mostly"?rate>=50&&rate<80:role==="hybrid"?rate>=20&&rate<50:role==="mostlybench"?rate>0&&rate<20:rate===0}
-function posMatch(p,pos){if(!pos)return true;const positions=p.pos.split(/[-/]/);if(pos==="guards")return positions.some(x=>["PG","SG"].includes(x));if(pos==="wings")return positions.some(x=>["SG","SF"].includes(x));if(pos==="bigs")return positions.some(x=>["PF","C"].includes(x));return positions.includes(pos)}
-function toggleCustom(which){const button=el(which+"Toggle"),custom=el(which+"Custom");const active=button.getAttribute("aria-pressed")!=="true";button.setAttribute("aria-pressed",String(active));custom.classList.toggle("hidden",!active);el(which).disabled=active;filter()}
-function filter(){
-  const q=el("search").value.toLowerCase().trim(),t=el("team").value,min=Number(el("minimum").value);
-  const pos=el("position").value,role=el("role").value,ppg=el("ppg").value,usage=el("usage").value;
-  const ppgCustom=el("ppgToggle").getAttribute("aria-pressed")==="true",usageCustom=el("usageToggle").getAttribute("aria-pressed")==="true";
-  const ppgExact=el("ppgExact").value,usageExact=el("usageExact").value;
-  shown=players.filter(p=>{
-    if((q&&!(p.name+" "+p.team).toLowerCase().includes(q))||(t&&p.team!==t)||p.games<min||!posMatch(p,pos)||!roleMatch(p,role))return false;
-    if(ppgCustom){if(ppgExact!==""&&!matchesNumeric(p.points,Number(ppgExact),el("ppgOp").value))return false}
-    else if(ppg!==""&&p.points<Number(ppg))return false;
-    if(usageCustom){if(usageExact!==""&&!matchesNumeric(p.usage,Number(usageExact),el("usageOp").value))return false}
-    else if(usage!==""){const [lo,hi]=usage.split(":").map(Number);if(p.usage===null||p.usage<lo||p.usage>=hi)return false}
-    return true
-  });
-  shown.sort((a,b)=>{const av=a[key],bv=b[key];if(av===null)return 1;if(bv===null)return -1;const cmp=typeof av==="string"?av.localeCompare(bv):av-bv;return desc?-cmp:cmp});
-  page=0;render();
-}
-function load(data,advanced){
-  const advancedMap=new Map();
-  for(const r of advanced){
-    const name=(r.Player||"").replace(/\\*/g,"").trim(),team=(r.Team||"").trim();if(!name)continue;
-    const k=name+"|"+team;
-    advancedMap.set(k,r);
-    if(/^(?:[2-9]TM|TOT)$/.test(team))advancedMap.set(name+"|TOTAL",r);
-  }
-  const selected=new Map();const totals=/^(?:[2-9]TM|TOT)$/;
-  for(const r of data){
-    const name=(r.Player||"").replace(/\*/g,"").trim(),team=(r.Team||"").trim();if(!name||name==="Player")continue;
-    const adv=advancedMap.get(name+"|"+team)||advancedMap.get(name+"|TOTAL");
-    const rawUsage=adv?.["USG%"];const parsedUsage=rawUsage==null||rawUsage===""?null:Number(rawUsage);
-    const p={name,team,pos:r.Pos||"—",games:num(r.G),starts:num(r.GS),mpg:num(r.MP),usage:Number.isFinite(parsedUsage)?parsedUsage:null,points:num(r.PTS),fga:num(r.FGA),fta:num(r.FTA)};
-    const old=selected.get(name);if(!old||(totals.test(team)&&!totals.test(old.team))||(!totals.test(old.team)&&p.games>old.games))selected.set(name,p);
-  }
-  players=[...selected.values()].map(p=>{const attempts=p.fga+.44*p.fta,ts=attempts>0?p.points/(2*attempts):null;return {...p,ts,plus:ts===null?null:100*ts/BASELINE,diff:ts===null?null:100*(ts-BASELINE)}});
-  el("count").textContent=players.length.toLocaleString();
-  const teams=[...new Set(players.map(p=>p.team))].sort();for(const t of teams){const o=document.createElement("option");o.value=t;o.textContent=t;el("team").appendChild(o)}
-  el("status").textContent="2025–26 regular-season players loaded.";filter();
-}
-for(const id of ["search","team","minimum","position","role","ppg","ppgExact","ppgOp","usage","usageExact","usageOp"])el(id).addEventListener(id==="search"?"input":"change",filter);
-document.querySelectorAll("th[data-k]").forEach(th=>th.addEventListener("click",()=>{const k=th.dataset.k;desc=k===key?!desc:!["name","team","pos"].includes(k);key=k;filter()}));
-for(const which of ["ppg","usage"])el(which+"Toggle").onclick=()=>toggleCustom(which);
-el("prev").onclick=()=>{if(page){page--;render()}};el("next").onclick=()=>{if((page+1)*PER_PAGE<shown.length){page++;render()}};
-el("export").onclick=()=>{
-  if(!shown.length)return;
-  const cols=["name","team","pos","games","starts","mpg","points","usage","fga","fta","ts","plus","diff"],head=["Player","Team","Position","Games","Games Started","MPG","PPG","Usage %","FGA per Game","FTA per Game","TS% (decimal)","TS+","TS vs League (pp)"];
-  const lines=[head.join(",")];for(const p of shown){lines.push(cols.map(k=>'"'+String(p[k]??"").replace(/"/g,'""')+'"').join(","))}
-  const url=URL.createObjectURL(new Blob([lines.join("\n")],{type:"text/csv;charset=utf-8"}));const a=document.createElement("a");a.href=url;a.download="hoopmetrics-2025-26-ts-plus.csv";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
-};
-Promise.all([DATA_URL,ADVANCED_URL].map(url=>fetch(url).then(r=>{if(!r.ok)throw Error("HTTP "+r.status);return r.text()}))).then(([perGame,advanced])=>load(parseCSV(perGame),parseCSV(advanced))).catch(e=>{el("status").textContent="Could not load the player dataset: "+e.message;el("status").className="error"});
-</script>
-</body></html>
+<div class="view" id="view-compare"><div class="eyebrow">THE DATA LAB / HEAD TO HEAD</div><h1>Player <em>comparison.</em></h1><p class="lead">Compare the same 2025–26 advanced metrics side by side. Percentiles are calculated using eligible NBA players.</p><section class="panel compare-panel"><div class="compare-choosers"><label>PLAYER ONE<input id="playerA" list="playerOptions" placeholder="Search player…"></label><span class="vs">VS</span><label>PLAYER TWO<input id="playerB" list="playerOptions" placeholder="Search player…"></label><button id="compareBtn" class="primary-btn">Compare →</button></div><datalist id="playerOptions"></datalist><div id="compareResults" class="compare-results"><div class="empty-state">Choose two players to see their advanced statistical profiles.</div></div></section></div>
+<div class="view" id="view-assistant"><div class="eyebrow">THE DATA LAB / NATURAL LANGUAGE</div><h1>Ask <em>HoopMetrics.</em></h1><p class="lead">Ask questions about the 2025–26 player database. Responses are calculated from published statistics, not fabricated predictions.</p><section class="chat-shell"><div class="chat-header"><div class="assistant-orb">✦</div><div><b>HoopMetrics Stats Assistant</b><small>Local question parser · 2025–26 season only</small></div><span class="ready">DATA-POWERED</span></div><div class="chat-log" id="chatLog" aria-live="polite"><div class="bubble bot">Hey! Ask me who leads in TS+, which guards have the best assist-to-turnover ratio, or who ranks in the 90th percentile of scoring efficiency. For reliable rankings, I'll apply a qualified-player minimum.</div></div><div class="prompts" id="prompts"><button data-prompt="Who is in the 90th percentile or higher in scoring efficiency?">90th+ percentile efficiency</button><button data-prompt="Top 10 players in BPM">Top 10 BPM</button><button data-prompt="Best guards in assist to turnover ratio">Best passing guards</button><button data-prompt="Who leads the league in defensive box plus minus?">Defensive BPM leaders</button><button data-prompt="Compare Shai Gilgeous-Alexander and Luka Doncic in TS+">Compare star efficiency</button></div><form id="chatForm" class="chat-compose"><input id="chatInput" placeholder="Ask anything about the 2025–26 stats…" autocomplete="off" aria-label="Ask a stats question"><button type="submit" class="primary-btn">Ask ↗</button></form><p class="assistant-disclaimer">This is a browser-based conversational analytics assistant, not a generative AI model. It supports defined questions, measures, comparisons and percentile rankings; it cannot answer arbitrary questions or independently research new information.</p></section></div>
+<div class="view" id="view-method"><div class="eyebrow">THE DATA LAB / TRANSPARENCY</div><h1>Understand <em>every metric.</em></h1><p class="lead">Definitions, datasets, qualifications, and limitations behind HoopMetrics rankings.</p><section id="methodContent" class="method-grid"></section></div>
+</main></div>
+<div class="drawer-backdrop hidden" id="drawerBackdrop"></div><aside class="drawer hidden" id="profileDrawer" role="dialog" aria-modal="true" aria-label="Player statistics"><div class="drawer-head"><span>PLAYER BREAKDOWN · 2025–26</span><button id="closeDrawer" aria-label="Close profile">✕</button></div><div id="profileContent"></div></aside>
+<script src="./app.js" defer></script></body></html>
