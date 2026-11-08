@@ -120,9 +120,10 @@ async function runChat(message,history){
 }
 const server=http.createServer(async(req,res)=>{
  const origin=req.headers.origin||"";
+ const pathname=new URL(req.url||"/","http://localhost").pathname;
  if(req.method==="OPTIONS"){res.writeHead(204,{"access-control-allow-origin":origin===ORIGIN?ORIGIN:"null","access-control-allow-methods":"POST, GET, OPTIONS","access-control-allow-headers":"Content-Type","vary":"Origin"});res.end();return}
- if(req.url==="/health"&&req.method==="GET")return json(res,200,{ok:true,model:MODEL,aiConfigured:!!client},origin===ORIGIN?ORIGIN:"null");
- if(req.url!=="/api/chat"||req.method!=="POST")return json(res,404,{error:"Not found"},"null");
+ if(pathname==="/health"&&req.method==="GET")return json(res,200,{ok:true,model:MODEL,aiConfigured:!!client},origin===ORIGIN?ORIGIN:"null");
+ if(pathname!=="/api/chat"||req.method!=="POST")return json(res,404,{error:"Not found"},"null");
  if(origin!==ORIGIN)return json(res,403,{error:"Origin not permitted"},"null");
  if(!client)return json(res,503,{error:"AI server not configured. Set GEMINI_API_KEY."},ORIGIN);
  const today=new Date().toISOString().slice(0,10);if(today!==day){day=today;totalCalls=0;traffic.clear()}
