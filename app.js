@@ -22,7 +22,7 @@ const METRICS={
  bpm:{label:"Box plus/minus"},obpm:{label:"Offensive box plus/minus"},vorp:{label:"Value over replacement player"},ws:{label:"Win shares"},ws48:{label:"Win shares per 48 minutes"},ows:{label:"Offensive win shares"},per:{label:"Player efficiency rating"}
 };
 const LOW_BETTER=new Set(["tov","tovpct"]); // lower TOV% is favorable but not a stand-alone impact ranking
-const state={players:[],eligible:[],filtered:[],sort:"plus",desc:true,cat:"scoring",page:0,loading:true};
+const state={players:[],eligible:[],filtered:[],sort:"plus",desc:true,cat:"scoring",page:0,loading:true,columns:{}};
 function parseCSV(text){
  const rows=[];let row=[],cell="",quoted=false;
  for(let i=0;i<text.length;i++){const ch=text[i];if(quoted){if(ch==='"'&&text[i+1]==='"'){cell+='"';i++}else if(ch==='"')quoted=false;else cell+=ch}
@@ -72,7 +72,7 @@ function percentile(metric,value){
  let less=0,equal=0;for(const x of vals){if(x<value-1e-9)less++;else if(Math.abs(x-value)<1e-9)equal++}
  const fraction=(less+equal/2)/vals.length;return 100*(LOW_BETTER.has(metric)?1-fraction:fraction);
 }
-function renderAll(){state.loading=false;$("totalCount").textContent=state.players.length.toLocaleString();filter();renderMethods();fillDatalist();}
+function renderAll(){state.loading=false;filter();renderMethods();fillDatalist();renderColumnOptions();}
 function populateSelectors(){
  const team=$("team");for(const t of [...new Set(state.players.map(p=>p.team))].sort()){const opt=document.createElement("option");opt.value=t;opt.textContent=t;team.appendChild(opt)}
 }
@@ -95,11 +95,34 @@ function filter(){
  const diff=typeof av==="string"?av.localeCompare(bv):av-bv;return state.desc?-diff:diff});
  state.page=0;renderTable();
 }
+
+const METRIC_HELP={
+ plus:"True Shooting Plus: 100 equals NBA league average; 110 means 10% more efficient relative to league TS%.",
+ ts:"True Shooting Percentage measures scoring efficiency across field goals and free throws.",
+ rts:"Relative TS: the player's true shooting percentage minus league average, in percentage points.",
+ efgPlus:"Effective field goal percentage relative to NBA average. 100 is league average.",
+ paa:"Estimated points per game above league-average efficiency given similar shooting opportunities.",
+ astpct:"Estimated share of teammate field goals assisted while a player is on court.",
+ astto:"Assists divided by turnovers. Higher indicates more assists per turnover.",
+ usage:"Estimated share of team possessions used by a player on the court.",
+ tovpct:"Percentage of a player's used offensive possessions ending in a turnover.",
+ bpm:"Box Plus/Minus estimates overall player impact using a box-score model per 100 possessions.",
+ obpm:"Offensive Box Plus/Minus estimates offensive contribution using a box-score model.",
+ dbpm:"Defensive Box Plus/Minus is a box-score-based defensive estimate, not a complete defensive assessment.",
+ vorp:"Value Over Replacement Player: cumulative player value derived from BPM and playing time.",
+ stlpct:"Estimated percentage of opponent possessions resulting in a steal by the player.",
+ blkpct:"Estimated percentage of opponent two-point shots blocked by the player.",
+ orb:"Estimated percentage of available offensive rebounds secured.",
+ drb:"Estimated percentage of available defensive rebounds secured."
+};
+function showMetricHelp(k){const meta=METRICS[k];if(!meta)return;const box=$("metricToast");if(!box)return;box.textContent=METRIC_HELP[k]||meta.label+": see About stats for calculation details.";box.classList.add("visible");clearTimeout(showMetricHelp.timer);showMetricHelp.timer=setTimeout(()=>box.classList.remove("visible"),6500)}
+function renderColumnOptions(){const cols=category[state.cat],chosen=state.columns[state.cat]??cols.slice(0,4).map(c=>c[0]);$("columnsOptions").innerHTML=cols.map(([k,label])=>"<label class='column-choice'><input type='checkbox' data-column='"+safe(k)+"' "+(chosen.includes(k)?"checked":"")+"><span>"+safe(label)+"</span></label>").join("");$("columnsOptions").querySelectorAll("input").forEach(input=>input.onchange=()=>{const old=state.columns[state.cat]??cols.slice(0,4).map(c=>c[0]);const next=input.checked?[...old,input.dataset.column]:old.filter(x=>x!==input.dataset.column);if(!next.length){input.checked=true;return}state.columns[state.cat]=next;renderTable()})}
+
 function renderTable(){
  const cols=category[state.cat],thead=$("tableHead"),tbody=$("tableBody");
- const headers=[["name","PLAYER"],["team","TEAM"],["games","GP"],...cols.map(c=>[c[0],c[1]])];
- thead.innerHTML="<tr>"+headers.map(([k,label])=>"<th data-sort='"+safe(k)+"'>"+safe(label)+(state.sort===k?(state.desc?" ↓":" ↑"):"")+"</th>").join("")+"</tr>";
- thead.querySelectorAll("th").forEach(th=>th.onclick=()=>{const k=th.dataset.sort;state.desc=state.sort===k?!state.desc:!["name","team"].includes(k);state.sort=k;filter()});
+ const chosen=state.columns[state.cat]??cols.slice(0,4).map(c=>c[0]);const headers=[["name","PLAYER"],["team","TEAM"],["games","GP"],...cols.filter(c=>chosen.includes(c[0])).map(c=>[c[0],c[1]])];
+ thead.innerHTML="<tr>"+headers.map(([k,label])=>"<th data-sort='"+safe(k)+"'>"+safe(label)+(METRICS[k]?" <button type=\'button\' class=\'metric-help\' data-help=\'"+safe(k)+"\' aria-label=\'Explain "+safe(label)+"\'>ⓘ</button>":"")+(state.sort===k?(state.desc?" ↓":" ↑"):"")+"</th>").join("")+"</tr>";
+ thead.querySelectorAll("th").forEach(th=>th.onclick=e=>{if(e.target.closest(".metric-help"))return;const k=th.dataset.sort;state.desc=state.sort===k?!state.desc:!["name","team"].includes(k);state.sort=k;filter()});thead.querySelectorAll(".metric-help").forEach(b=>b.onclick=e=>{e.stopPropagation();showMetricHelp(b.dataset.help)});
  const start=state.page*PER_PAGE;const display=state.filtered.slice(start,start+PER_PAGE);
  tbody.innerHTML=display.map(p=>"<tr>"+headers.map(([k])=>{
   let value=k==="name"?"<a href='#' data-profile='"+safe(p.id)+"'>"+safe(p.name)+"</a>":k==="team"?safe(p.team):k==="games"?p.games:metricText(k,p[k],true);
@@ -229,11 +252,14 @@ function addBubble(txt,who){const b=document.createElement("div");b.className="b
 function ask(q){if(!q.trim())return;addBubble(q,"user");if(state.loading){addBubble("Player data is still loading. Please try again after it finishes.","bot");return}try{addBubble(chatAnswer(q),"bot")}catch(err){addBubble("I couldn't interpret that question. Try: 'Top 10 players in TS+', '90th percentile in scoring efficiency', or 'best guards by assist-to-turnover ratio'.","bot")}}
 function boot(){
  document.querySelectorAll(".navitem").forEach(b=>b.onclick=()=>navigate(b.dataset.view));
- $("kpiChat").onclick=()=>navigate("assistant");
- document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x===b));state.cat=b.dataset.cat;state.sort=category[state.cat][0][0];state.desc=true;filter()});
+ $("floatingChat").onclick=()=>navigate("assistant");
+ document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x===b));state.cat=b.dataset.cat;state.sort=category[state.cat][0][0];state.desc=true;renderColumnOptions();filter()});
  ["search","team","position","role","games","tsa","ppg","usage","ppgExact","usageExact","ppgOp","usageOp"].forEach(id=>$(id).addEventListener(["search","ppgExact","usageExact"].includes(id)?"input":"change",filter));
  for(const id of ["ppg","usage"])$(id+"Toggle").onclick=()=>{const on=$(id+"Toggle").getAttribute("aria-pressed")!=="true";$(id+"Toggle").setAttribute("aria-pressed",String(on));$(id+"Custom").classList.toggle("hidden",!on);$(id).disabled=on;filter()};
  $("resetFilters").onclick=resetFilters;$("export").onclick=exportData;
+ $("advancedToggle").onclick=()=>{const open=$("advancedToggle").getAttribute("aria-expanded")!=="true";$("advancedToggle").setAttribute("aria-expanded",String(open));$("advancedChevron").textContent=open?"▴":"▾";document.querySelector(".filter-shelf").classList.toggle("advanced-open",open)};
+ $("columnsToggle").onclick=()=>{const open=$("columnsToggle").getAttribute("aria-expanded")!=="true";$("columnsToggle").setAttribute("aria-expanded",String(open));$("columnsPanel").classList.toggle("hidden",!open)};
+ $("columnsReset").onclick=()=>{delete state.columns[state.cat];renderColumnOptions();renderTable()};
  $("prev").onclick=()=>{if(state.page>0){state.page--;renderTable()}};
  $("next").onclick=()=>{if((state.page+1)*PER_PAGE<state.filtered.length){state.page++;renderTable()}};
  $("closeDrawer").onclick=closeProfile;$("drawerBackdrop").onclick=closeProfile;
