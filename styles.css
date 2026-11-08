@@ -51,3 +51,23 @@
 
 /* Hide legacy chat suggestion chips for cached HTML versions. */
 #prompts,.chat-shell .prompts,.assistant-shell .prompts{display:none!important}
+
+/* Season tabs and context */
+.season-switcher{display:flex;gap:3px;align-items:center;background:#13232c;padding:4px;border:1px solid #2f4550;border-radius:12px;letter-spacing:normal}
+.season-option{border:0;border-radius:8px;color:#9cb7c4;background:transparent;font-size:12px;font-weight:750;letter-spacing:0;padding:9px 13px;white-space:nowrap}
+.season-option.active{color:#061b17;background:var(--green)}
+.season-option:hover:not(.active){background:#213943;color:#f1faf8}
+.season-live{font-size:9px;margin-left:3px;font-weight:900;letter-spacing:.7px}
+.season-notice{margin:5px 0 12px;font-size:12px;color:#a9c3d1;line-height:1.6}
+.season-notice:empty{display:none}
+.scouting-overview{padding:17px 20px;margin:12px 18px;border:1px solid #344b57;background:#142633;border-radius:13px}
+.scouting-overview h3{margin:0 0 6px;font-size:14px;color:#e5f9f3}
+.scouting-description{font-size:11px;color:#91b0bb;line-height:1.55;margin:0 0 14px}
+.scouting-group{margin-top:12px}
+.scouting-group h4{font-size:11px;text-transform:uppercase;letter-spacing:1px;margin:0 0 7px;color:#afc9d3}
+.scouting-tags{display:flex;gap:7px;flex-wrap:wrap}
+.scouting-chip{font-size:11px;line-height:1.4;border:1px solid #3a5360;padding:6px 9px;border-radius:7px;color:#d7e7ed;background:#1c303e}
+.scouting-chip.strong{border-color:#387963;color:#7bdfb9;background:#183b34}
+.scouting-chip.mid{border-color:#697682;color:#e2eaf0}
+.scouting-chip.weak{border-color:#774d58;color:#f2b8c0;background:#3a2831}
+@media(max-width:720px){.topbar{padding:0 12px}.season-option{font-size:10px;padding:7px 8px}.topright{gap:4px}.logo{font-size:17px}}
