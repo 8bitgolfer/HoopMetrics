@@ -277,8 +277,25 @@ async function ask(q){
   addBubble((backend?"AI server error: ":"Stats assistant error: ")+err.message+(backend?" Check your Render backend and API settings.":""),"bot");
  }finally{asking=false;if(submit)submit.disabled=false}
 }
+async function checkAiStatus(){
+ const endpoint=(window.HOOPMETRICS_AI_API||"").trim().replace(/\\/$/,"");
+ const status=$("aiStatus");
+ if(!endpoint){status.textContent="STATS MODE";return}
+ const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),13000);
+ try{
+  const response=await fetch(endpoint+"/health",{signal:controller.signal,cache:"no-store"});
+  if(!response.ok)throw Error("Health check failed");
+  const result=await response.json();
+  status.textContent=result.aiConfigured?"AI READY":"AI KEY MISSING";
+  status.title=result.aiConfigured?"Backend is configured; ask a question to test the Gemini service.":"Set GEMINI_API_KEY in Render and redeploy.";
+ }catch(e){
+  status.textContent="AI OFFLINE";
+  status.title="Could not reach the Render AI backend. Check deployment status or try again after the service starts.";
+ }finally{clearTimeout(timer)}
+}
 function boot(){
- $("aiStatus").textContent=(window.HOOPMETRICS_AI_API||"").trim()?"AI CONNECTED":"STATS MODE";
+ $("aiStatus").textContent="CHECKING AI";
+ checkAiStatus();
  document.querySelectorAll(".navitem").forEach(b=>b.onclick=()=>navigate(b.dataset.view));
  $("floatingChat").onclick=()=>navigate("assistant");
  document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x===b));state.cat=b.dataset.cat;state.sort=category[state.cat][0][0];state.desc=true;renderColumnOptions();filter()});
