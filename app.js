@@ -159,12 +159,14 @@ function renderMethods(){
 }
 function openProfile(id){
  const p=state.players.find(x=>x.id===id);if(!p)return;
- const blocks=[
+ const groups=[
  ["SCORING",["plus","ts","rts","efgPlus","paa","points","usage"]],
  ["PLAYMAKING",["astpct","astto","tovpct","ast"]],
  ["DEFENSE",["stlpct","blkpct","dbpm","drb","orb"]],
  ["IMPACT",["bpm","obpm","dbpm","vorp"]]];
- $("profileContent").innerHTML="<div class='profile-main'><h2 class='profile-name'>"+safe(p.name)+"</h2><div class='profile-sub'>"+safe(p.team)+" · "+safe(p.pos)+" · "+p.games+" games · "+p.starts+" starts · "+f(p.mpg)+" MPG</div><div class='profile-stats'>"+[["PPG",metricText("points",p.points)],["TS+",metricText("plus",p.plus)],["BPM",metricText("bpm",p.bpm)]].map(([l,v])=>"<div class='mini-stat'><label>"+l+"</label><strong>"+v+"</strong></div>").join("")+"</div>"+blocks.map(([title,keys])=>"<section class='profile-group'><h3>"+title+"</h3>"+keys.map(k=>{const pct=percentile(k,p[k]);return "<div class='metric-bar'><div class='metric-label'><b>"+safe(METRICS[k].label)+" <span>"+metricText(k,p[k])+"</span></b><span>"+(pct===null?"n/a":f(pct,0)+"th pct")+"</span></div><div class='bar-track'><div class='bar-fill' style='width:"+(pct===null?0:pct)+"%'></div></div></div>"}).join("")+"</section>").join("")+"<div class='profile-foot'>Percentiles are compared with 2025–26 qualified players (41+ GP, 500+ estimated TSA). Box-score defensive estimates and BPM are not a substitute for lineup or tracking analysis. Values reflect published 2025–26 regular-season source statistics.</div></div>";
+ const summary="<div class='profile-main'><h2 class='profile-name'>"+safe(p.name)+"</h2><div class='profile-sub'>"+safe(p.team)+" · "+safe(p.pos)+" · "+p.games+" GP · "+p.starts+" starts · "+f(p.mpg)+" MPG</div><div class='profile-stats'>"+[["PPG",metricText("points",p.points)],["TS+",metricText("plus",p.plus)],["BPM",metricText("bpm",p.bpm)]].map(([label,value])=>"<div class='mini-stat'><label>"+label+"</label><strong>"+value+"</strong></div>").join("")+"</div>";
+ const details=groups.map(([title,keys],i)=>"<details class='profile-section' "+(i===0?"open":"")+"><summary>"+title+" <span>"+keys.length+" stats ▾</span></summary><div class='profile-section-body'>"+keys.map(k=>{const pct=percentile(k,p[k]);return "<div class='metric-bar'><div class='metric-label'><b>"+safe(METRICS[k].label)+" <span>"+metricText(k,p[k])+"</span></b><span>"+(pct===null?"n/a":f(pct,0)+"th pct")+"</span></div><div class='bar-track'><div class='bar-fill' style='width:"+(pct===null?0:pct)+"%'></div></div></div>"}).join("")+"</div></details>").join("");
+ $("profileContent").innerHTML=summary+details+"<div class='profile-foot'>Percentiles use qualified 2025–26 players (41+ GP, 500+ estimated TSA). Box-score defense and BPM have important limitations.</div></div>";
  $("drawerBackdrop").classList.remove("hidden");$("profileDrawer").classList.remove("hidden");document.body.style.overflow="hidden";
 }
 function closeProfile(){$("drawerBackdrop").classList.add("hidden");$("profileDrawer").classList.add("hidden");document.body.style.overflow=""}
