@@ -196,8 +196,8 @@ const server=http.createServer(async(req,res)=>{
  if(req.method==="OPTIONS"){res.writeHead(204,{"access-control-allow-origin":origin===ORIGIN?ORIGIN:"null","access-control-allow-methods":"POST, GET, OPTIONS","access-control-allow-headers":"Content-Type","vary":"Origin"});res.end();return}
  if(pathname==="/health"&&req.method==="GET")return json(res,200,{ok:true,model:MODEL,aiConfigured:!!client},origin===ORIGIN?ORIGIN:"null");
  if(pathname==="/api/season/2026-27"&&req.method==="GET"){
-  if(origin!==ORIGIN)return json(res,403,{error:"Origin not permitted"},"null");
-  try{const data=await loadLive();return json(res,200,data,ORIGIN)}
+  if(origin&&origin!==ORIGIN)return json(res,403,{error:"Origin not permitted"},"null");
+  try{const data=await loadLive();return json(res,200,data,origin===ORIGIN?ORIGIN:"null")}
   catch(error){console.error("Season data error:",String(error.message).slice(0,300));return json(res,503,{error:"2026-27 data temporarily unavailable; check server logs."},ORIGIN)}
  }
  if(pathname!=="/api/chat"||req.method!=="POST")return json(res,404,{error:"Not found"},"null");
