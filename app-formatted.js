@@ -145,6 +145,18 @@ function metricText(k,v,html=false){
  return html?safe(out):out;
 }
 function renderMethods(){
+ if(state.season==="2026-27"){
+  const blocks=[
+   ["2026–27 source","BoxScore Lab 2026–27 player season totals (CC BY 4.0).","Live in-season totals, refreshed as the upstream provider updates. Small samples can produce misleading rankings."],
+   ["Early-season qualification","5+ games and 75+ estimated true-shooting attempts.","Only qualified players are included in default percentiles; this is a much smaller threshold than the completed 2025–26 season."],
+   ["TS+ / eFG+ benchmarks","100 × player rate ÷ current player-pool rate.","The 2026–27 baseline is derived from aggregated player totals, not an independently verified official league benchmark."],
+   ["Strengths, average, weaknesses","Position-group percentiles for selected available statistical categories.","A high or low ranking is a descriptive signal, not a definitive skill grade. Team context and role matter."],
+   ["Not available","BPM, OBPM, DBPM, VORP, win shares, defensive tracking and other unavailable fields.","Missing values stay missing; no advanced model metrics are invented."],
+   ["Source credit","https://www.boxscorelab.com/downloads/","BoxScore Lab; originally compiled from NBA Stats and updated during the season. Copyright CC BY 4.0." ]
+  ];
+  $("methodContent").innerHTML=blocks.map(([title,formula,desc])=>"<div class='method-card'><h3>"+safe(title)+"</h3><code>"+safe(formula)+"</code><p>"+safe(desc)+"</p></div>").join("");
+  return;
+ }
  const blocks=[
  ["TS% and TS+","TS% = PTS / (2 × (FGA + 0.44 × FTA)). TS+ = 100 × (player TS% / 0.581).","TS% uses published advanced-data season rates where available. League TS% was 58.1% in 2025–26."],
  ["rTS% / eFG+","rTS = player TS% − 58.1 percentage points. eFG% = (FGM + 0.5 × 3PM) / FGA. eFG+ = 100 × player eFG% / 0.546.","NBA league eFG% = 54.6% in 2025–26. eFG is from the per-game CSV source."],
@@ -223,7 +235,7 @@ function comparePlayers(a,b){const keys=["points","plus","rts","efgPlus","paa","
 }
 function navigate(view){document.querySelectorAll(".view").forEach(e=>e.classList.toggle("active",e.id==="view-"+view));document.querySelectorAll(".navitem").forEach(e=>e.classList.toggle("selected",e.dataset.view===view));window.scrollTo(0,0)}
 function resetFilters(){
- $("search").value="";$("team").value="";$("position").value="";$("role").value="";$("games").value="41";$("tsa").value="0";$("ppg").value="";$("usage").value="";
+ $("search").value="";$("team").value="";$("position").value="";$("role").value="";$("games").value=state.season==="2026-27"?"5":"41";$("tsa").value="0";$("ppg").value="";$("usage").value="";
  for(const x of ["ppg","usage"]){$(x+"Exact").value="";$(x+"Op").value="gte";$(x+"Toggle").setAttribute("aria-pressed","false");$(x+"Custom").classList.add("hidden");$(x).disabled=false}
  filter();
 }
@@ -328,7 +340,7 @@ async function ask(q){
    }finally{clearTimeout(timeout)}
   }else{
    if(state.loading)throw Error("Player data is still loading");
-   answer=chatAnswer(q);
+   answer=state.season==="2026-27"?"The 2026–27 chatbot needs the Render AI backend. The browser-only fallback currently supports completed 2025–26 data.":chatAnswer(q);
   }
   addBubble(answer,"bot");chatHistory.push({role:"user",content:q},{role:"assistant",content:answer});
   if(chatHistory.length>24)chatHistory.splice(0,chatHistory.length-24);
