@@ -48,3 +48,6 @@
 .bubble.bot strong{font-weight:750;color:#ecfff7}
 .bubble.bot em{font-style:italic;color:#c2dfd8}
 .bubble.bot code{background:#0e202b;border:1px solid #2f4650;border-radius:4px;padding:1px 4px;font-size:.93em;color:#c1f4e6}
+
+/* Hide legacy chat suggestion chips for cached HTML versions. */
+#prompts,.chat-shell .prompts,.assistant-shell .prompts{display:none!important}
