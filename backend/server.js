@@ -85,7 +85,7 @@ async function loadLive(){
   const team=String(pickField(r,"team","team_abbr","team_abbreviation","team_code","tm")||"—");
   const pos=String(pickField(r,"pos","position","player_position")||positions.get(id(name))||"—");
   const tsa=fg+.44*ft,ts=tsa?pt/(2*tsa):null,efg=fg?(fgm+.5*threes)/fg:null;
-  parsed.push({name:String(name).trim(),team,pos,games,starts:starts??0,mpg:minutes/games,points:pt/games,
+  parsed.push({name:String(name).trim(),team,pos,games,starts:starts??null,mpg:minutes/games,points:pt/games,
    fga:fg/games,fta:ft/games,ast:assists/games,tov:turnovers/games,
    stl:(total("stl","steals")||0)/games,blk:(total("blk","blocks")||0)/games,
    ts:ts===null?null:100*ts,efg:efg===null?null:100*efg,tsa,
@@ -109,7 +109,7 @@ async function loadLive(){
   p.rts=p.ts===null?null:p.ts-100*leagueTS;
   p.efgPlus=p.efg===null?null:p.efg/leagueEFG;
   p.paa=p.tsa?p.points-2*(p.tsa/p.games)*leagueTS:null;
-  p.role=p.games?100*p.starts/p.games:0;
+  p.role=p.games&&p.starts!==null?100*p.starts/p.games:null;
   p.qualified=p.games>=5&&p.tsa>=75;
  }
  const players=parsed.map(({made,threeMade,pointsTotal,fgaTotal,ftaTotal,...p})=>({
@@ -167,7 +167,7 @@ function readBody(req){return new Promise((resolve,reject)=>{let str="";req.on("
 async function runChat(message,history,season="2025-26"){
  const live=season==="2026-27";
  const players=live?(await loadLive()).players:await load();
- const guidance=live?instructions.replaceAll("2025-26","2026-27").replace("If data is not in tool fields (e.g., defensive matchup tracking, potential assists, 2026-27 season stats, injuries, RAPM, EPM or historical seasons)","If data is not in tool fields (e.g., BPM, defensive matchup tracking, potential assists, injuries, RAPM, EPM or historical seasons)").replaceAll("41+ games, 500+ true-shooting attempts","5+ games, 75+ true-shooting attempts").replace("Standard league TS=58.1%, eFG=54.6%.","League TS+ benchmarks are computed from the 2026-27 source player pool; distinguish from official team totals. Advanced BPM/WS/PER fields are unavailable this season."):instructions;
+ const guidance=live?instructions.replaceAll("2025-26","2026-27").replace("COMPLETE 2026-27 regular season","IN-PROGRESS 2026-27 regular season").replace("If data is not in tool fields (e.g., defensive matchup tracking, potential assists, 2026-27 season stats, injuries, RAPM, EPM or historical seasons)","If data is not in tool fields (e.g., BPM, defensive matchup tracking, potential assists, injuries, RAPM, EPM or historical seasons)").replaceAll("41+ games, 500+ true-shooting attempts","5+ games, 75+ true-shooting attempts").replace("Standard league TS=58.1%, eFG=54.6%.","League TS+ benchmarks are computed from the 2026-27 source player pool; distinguish from official team totals. Advanced BPM/WS/PER fields are unavailable this season."):instructions;
  const messages=[{role:"system",content:guidance},
  ...history.filter(x=>x&&["user","assistant"].includes(x.role)&&typeof x.content==="string").slice(-10).map(x=>({role:x.role,content:x.content.slice(0,1500)})),
  {role:"user",content:message}];
