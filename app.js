@@ -251,8 +251,34 @@ function chatAnswer(raw){
  return title+"\n"+lines.join("\n")+"\n\n"+(qual?"Qualified pool: 41+ games and 500+ estimated true shooting attempts.":"No games/attempt qualification applied.")+"\nYou can ask for a different position, metric, percentile, or 'top 20'.";
 }
 function addBubble(txt,who){const b=document.createElement("div");b.className="bubble "+who;b.textContent=txt;$("chatLog").appendChild(b);$("chatLog").scrollTop=$("chatLog").scrollHeight}
-function ask(q){if(!q.trim())return;addBubble(q,"user");if(state.loading){addBubble("Player data is still loading. Please try again after it finishes.","bot");return}try{addBubble(chatAnswer(q),"bot")}catch(err){addBubble("I couldn't interpret that question. Try: 'Top 10 players in TS+', '90th percentile in scoring efficiency', or 'best guards by assist-to-turnover ratio'.","bot")}}
+const chatHistory=[];
+let asking=false;
+async function ask(q){
+ if(!q.trim()||asking)return;
+ const backend=(window.HOOPMETRICS_AI_API||"").trim().replace(/\/$/,"");
+ const history=chatHistory.slice(-10);
+ addBubble(q,"user");asking=true;
+ const submit=$("chatForm").querySelector("button[type=submit]");if(submit)submit.disabled=true;
+ try{
+  let answer;
+  if(backend){
+   const controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),45000);
+   try{
+    const response=await fetch(backend+"/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({message:q,history}),signal:controller.signal});
+    const data=await response.json();if(!response.ok)throw Error(data.error||"AI server unavailable");answer=data.answer;
+   }finally{clearTimeout(timeout)}
+  }else{
+   if(state.loading)throw Error("Player data is still loading");
+   answer=chatAnswer(q);
+  }
+  addBubble(answer,"bot");chatHistory.push({role:"user",content:q},{role:"assistant",content:answer});
+  if(chatHistory.length>24)chatHistory.splice(0,chatHistory.length-24);
+ }catch(err){
+  addBubble((backend?"AI server error: ":"Stats assistant error: ")+err.message+(backend?" Check your Render backend and API settings.":""),"bot");
+ }finally{asking=false;if(submit)submit.disabled=false}
+}
 function boot(){
+ $("aiStatus").textContent=(window.HOOPMETRICS_AI_API||"").trim()?"AI CONNECTED":"STATS MODE";
  document.querySelectorAll(".navitem").forEach(b=>b.onclick=()=>navigate(b.dataset.view));
  $("floatingChat").onclick=()=>navigate("assistant");
  document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x===b));state.cat=b.dataset.cat;state.sort=category[state.cat][0][0];state.desc=true;renderColumnOptions();filter()});
