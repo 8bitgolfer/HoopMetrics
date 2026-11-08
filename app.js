@@ -308,6 +308,9 @@ async function checkAiStatus(){
  }finally{clearTimeout(timer)}
 }
 function boot(){
+ // Remove legacy suggestion chips even if cached HTML still contains them.
+ const legacyPrompts=document.getElementById("prompts");
+ if(legacyPrompts)legacyPrompts.remove();
  $("aiStatus").textContent="CHECKING AI";
  checkAiStatus();
  document.querySelectorAll(".navitem").forEach(b=>b.onclick=()=>navigate(b.dataset.view));
