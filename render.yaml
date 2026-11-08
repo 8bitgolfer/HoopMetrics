@@ -8,10 +8,10 @@ services:
     startCommand: npm start
     healthCheckPath: /health
     envVars:
-      - key: OPENAI_API_KEY
+      - key: GEMINI_API_KEY
         sync: false
-      - key: OPENAI_MODEL
-        value: gpt-5-mini
+      - key: GEMINI_MODEL
+        value: gemini-2.5-flash
       - key: ALLOWED_ORIGIN
         value: https://8bitgolfer.github.io
       - key: MAX_DAILY_REQUESTS
