@@ -216,7 +216,7 @@ function chatAnswer(raw){
   const p=distinct[0],r=percentile(m,p[m]);
   return p.name+" ("+p.team+") — "+METRICS[m].label+": "+metricText(m,p[m])+"."+ (r===null?"":" This is approximately the "+f(r,1)+"th percentile among qualified 2025–26 players.")+"\nOther context: "+f(p.points)+" PPG, "+f(p.usage)+"% USG, "+f(p.bpm)+" BPM.";
  }
- const top=(q.match(/top\s*(\d{1,2})\b/)||[])[1];let max=top?Math.min(30,Number(top)):10;
+ const top=(q.match(/top\s*(\d{1,2})\b/)||[])[1];let max=top?Math.min(30,Number(top)):(pct!==null?Math.min(30,players.length):10);
  const ascending=/lowest|worst|least|bottom/.test(q);
  players.sort((a,b)=>LOW_BETTER.has(m)?(ascending?b[m]-a[m]:a[m]-b[m]):(ascending?a[m]-b[m]:b[m]-a[m]));
  if(!players.length)return "No eligible 2025–26 players matched that request. Try removing the position requirement or asking about a different metric.";
