@@ -250,7 +250,21 @@ function chatAnswer(raw){
  const lines=players.slice(0,max).map((p,i)=>(i+1)+". "+p.name+" ("+p.team+", "+p.pos+") — "+metricText(m,p[m])+(pct!==null?" · "+f(percentile(m,p[m]),0)+"th pct":""));
  return title+"\n"+lines.join("\n")+"\n\n"+(qual?"Qualified pool: 41+ games and 500+ estimated true shooting attempts.":"No games/attempt qualification applied.")+"\nYou can ask for a different position, metric, percentile, or 'top 20'.";
 }
-function addBubble(txt,who){const b=document.createElement("div");b.className="bubble "+who;b.textContent=txt;$("chatLog").appendChild(b);$("chatLog").scrollTop=$("chatLog").scrollHeight}
+// Render only a small, safe subset of Markdown; all model text is HTML-escaped first.
+function renderChatMarkdown(text){
+ return safe(text)
+  .replace(/\*\*([^*\n]+)\*\*/g,"<strong>$1</strong>")
+  .replace(/(^|[^*\\w])\*([^*\n]+)\*(?=$|[^*\\w])/g,"$1<em>$2</em>")
+  .replace(/`([^`\n]+)`/g,"<code>$1</code>");
+}
+function addBubble(txt,who){
+ const b=document.createElement("div");
+ b.className="bubble "+who;
+ if(who==="bot")b.innerHTML=renderChatMarkdown(txt);
+ else b.textContent=txt;
+ $("chatLog").appendChild(b);
+ $("chatLog").scrollTop=$("chatLog").scrollHeight;
+}
 const chatHistory=[];
 let asking=false;
 async function ask(q){
