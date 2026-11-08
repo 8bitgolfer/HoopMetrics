@@ -57,3 +57,15 @@ No build pipeline, server, or secret key is needed. Files: `index.html`, `styles
 ## Future optional LLM support
 
 A genuine generative AI assistant should use a **server-side** endpoint that handles all API keys, rate limits, and data retrieval. Do not put API keys into GitHub Pages JavaScript.
+
+## Simplified interface (November 2026)
+
+- Horizontal navigation: **Players, Compare, Ask HoopMetrics, About stats**.
+- A focused player leaderboard with four default category columns; **Customize columns** reveals all supported advanced metrics.
+- Team, position, games and search remain visible; starter/bench, TSA, decimal PPG and USG filters are available via **Advanced filters**.
+- Click the **ⓘ** icon in a metric header to read a plain-language explanation.
+- Click a player to open a profile with four expandable groups: Scoring, Playmaking, Defense and Impact.
+- Floating **Ask HoopMetrics** shortcut opens the browser-based stats assistant.
+- Mobile-friendly layout; no permanent desktop sidebar.
+
+The assistant is still a rules-based query engine using the season dataset, **not a generative AI model**.
