@@ -102,3 +102,12 @@ HoopMetrics now includes an **optional secure AI backend** in `backend/`, using 
 - Ask about unavailable 2026–27 data; the AI should disclose that the connected source covers 2025–26.
 
 **The deployed AI server, API key and billing remain yours to configure.**
+
+## Gemini free-tier configuration (November 2026)
+The HoopMetrics backend is now configured for **Google Gemini 2.5 Flash**, through Google's OpenAI-compatible Chat Completions API, rather than the paid OpenAI API. Create a Gemini API key at https://aistudio.google.com/api-keys and store it **only** in the Render environment as `GEMINI_API_KEY`. The Render Blueprint also sets `GEMINI_MODEL=gemini-2.5-flash` and the frontend `ai-config.js` points to `https://hoopmetrics-ai.onrender.com`. Never paste a key into GitHub or into a public chat.
+
+The Render Blueprint should sync the new environment variable names. After the sync, add the Gemini key in Render's Environment page and use **Save, rebuild and deploy** if prompted. The service's `/health` endpoint should report `aiConfigured: true`. On the page, the indicator reads **AI CONNECTED** when an API endpoint is configured; that alone is not proof the secret is valid, so test a statistical question after deployment.
+
+Gemini has a **limited free tier**, subject to provider limits and eligibility; do not enable billing if you want to stay on the free tier. Free-tier input may be used by Google to improve products under its stated policies. A publicly accessible chatbot may exhaust free usage limits quickly. If the provider rate limit is exceeded, the backend will return an error; it will not silently switch to a paid model.
+
+Older OpenAI-specific instructions earlier in this README are superseded by this Gemini configuration.
