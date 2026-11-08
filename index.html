@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b1017"><title>HoopMetrics | NBA Advanced Statistics</title>
+<style>
+:root{font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;color:#edf4f7;background:#0b1017;font-synthesis:none}
+*{box-sizing:border-box}body{margin:0}header,main{max-width:1250px;margin:auto;padding:24px}
+header{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #26323d}
+.brand{font-weight:850;font-size:24px;letter-spacing:-1px}.brand span{color:#65dfad}.tag{color:#8294a4;font-size:12px;font-weight:650;letter-spacing:1.2px}
+h1{font-size:clamp(42px,7vw,76px);letter-spacing:-3px;line-height:1.02;margin:12px 0}h1 em{font-style:normal;color:#65dfad}
+.hero{padding:42px 0 28px}.eyebrow{color:#65dfad;font-size:12px;font-weight:750;letter-spacing:2px}
+p{color:#96a7b6;line-height:1.65;max-width:670px}.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:20px 0 30px}
+.card{border:1px solid #293746;background:#131d27;padding:22px;border-radius:14px}.card small{display:block;color:#8fa5b5;font-size:11px;letter-spacing:1px;text-transform:uppercase}
+.card strong{display:block;font-size:35px;margin-top:8px;font-variant-numeric:tabular-nums}
+.controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:16px 0}.controls input{flex:1;min-width:180px}
+input,select,button{font:inherit;border-radius:9px;padding:11px 12px;border:1px solid #344552;background:#14202a;color:#eaf3fa}
+button{cursor:pointer}button:hover{border-color:#65dfad}button:disabled{opacity:.35;cursor:default}
+.tablewrap{overflow:auto;border:1px solid #293746;border-radius:13px}table{border-collapse:collapse;width:100%;min-width:790px}
+th,td{padding:13px 15px;text-align:right;border-bottom:1px solid #20303c;white-space:nowrap;font-variant-numeric:tabular-nums}
+th{background:#15212c;color:#9cafbe;font-size:12px;cursor:pointer;user-select:none}th:hover{color:#65dfad}
+td{font-size:14px}th:first-child,td:first-child{text-align:left}tbody tr:hover{background:#172430}.player{font-weight:720}
+.good{color:#65dfad}.bad{color:#f18c91}.average{color:#d3e4ef}
+.bottom{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:16px 0 38px;color:#9dafbe}
+.note{border:1px solid #2b3b46;background:#111b24;border-radius:12px;padding:20px;font-size:13px;color:#9eafbc;line-height:1.7}
+.note a{color:#65dfad}#status{font-size:14px;color:#a0afbe;margin:10px 0}.error{color:#f18c91!important}
+@media(max-width:640px){header,main{padding:17px}.cards{grid-template-columns:1fr}.card strong{font-size:28px}.tag{display:none}h1{letter-spacing:-2px}}
+</style>
+</head>
+<body>
+<header><div class="brand">HOOP<span>METRICS</span>.</div><div class="tag">BEYOND THE BOX SCORE</div></header>
+<main>
+<section class="hero"><div class="eyebrow">2025–26 • REGULAR SEASON</div><h1>TRUE SHOOTING <em>+</em></h1><p>NBA scoring efficiency standardized to the league. <strong style="color:#edf4f7">TS+ = 100</strong> is exactly league average; above 100 is more efficient, below 100 is less efficient.</p></section>
+<section class="cards"><div class="card"><small>League TS% baseline</small><strong>58.1%</strong></div><div class="card"><small>Average TS+ benchmark</small><strong>100</strong></div><div class="card"><small>Players in dataset</small><strong id="count">—</strong></div></section>
+<h2>Player leaderboard</h2><div class="controls"><input id="search" placeholder="Search player or team…" aria-label="Search players"><select id="team"><option value="">All teams</option></select><select id="minimum"><option value="0">All games played</option><option value="10">10+ games</option><option value="25">25+ games</option><option value="41">41+ games</option><option value="58">58+ games</option></select><button id="export">Export CSV ↓</button></div>
+<div id="status">Loading 2025–26 season data…</div>
+<div class="tablewrap"><table><thead><tr><th data-k="name">Player</th><th data-k="team">Team</th><th data-k="pos">Pos</th><th data-k="games">GP</th><th data-k="points">PPG</th><th data-k="fga">FGA</th><th data-k="fta">FTA</th><th data-k="ts">TS%</th><th data-k="plus">TS+ ↓</th><th data-k="diff">vs league (pp)</th></tr></thead><tbody id="rows"></tbody></table></div>
+<div class="bottom"><span id="shown">—</span><div><button id="prev">← Prev</button> <span id="page"></span> <button id="next">Next →</button></div></div>
+<section class="note"><b>Methodology.</b> TS% = PTS / [2 × (FGA + 0.44 × FTA)]. TS+ = 100 × (player TS% / league TS%). 2025–26 league TS% baseline: 58.1%. TS+ is a relative index, not a shooting percentage. The 0.44 factor estimates free-throw possessions. This version derives TS% from rounded per-game source data, so values can differ slightly from precise season-total calculations. Traded players are deduplicated to their combined-season row where provided. Low-sample outliers are included unless filtered. <a href="https://github.com/Baileyd18/NBA-Player-Impact-and-Value-Dashboard-2025-26" target="_blank" rel="noopener">Player data source</a> · <a href="https://www.basketball-reference.com/leagues/NBA_stats_per_game.html" target="_blank" rel="noopener">League baseline source</a>. Unofficial fan project.</section>
+</main>
+<script>
+const DATA_URL="https://raw.githubusercontent.com/Baileyd18/NBA-Player-Impact-and-Value-Dashboard-2025-26/main/Data/raw_per_game.csv";
+const BASELINE=.581,PER_PAGE=40;
+let players=[],shown=[],key="plus",desc=true,page=0;
+const el=id=>document.getElementById(id);
+const num=v=>Number(v)||0;
+function parseCSV(csv){
+  const rows=[];let row=[],cell="",quote=false;
+  for(let i=0;i<csv.length;i++){const c=csv[i];if(quote){if(c==='"'&&csv[i+1]==='"'){cell+='"';i++}else if(c==='"')quote=false;else cell+=c}else if(c==='"')quote=true;else if(c===','){row.push(cell);cell=""}else if(c==='\n'){row.push(cell.replace(/\r$/,""));rows.push(row);row=[];cell=""}else cell+=c}
+  if(cell||row.length){row.push(cell);rows.push(row)}
+  const header=rows.shift();return rows.filter(r=>r.length===header.length).map(r=>Object.fromEntries(header.map((h,i)=>[h,r[i]])));
+}
+function render(){
+  const start=page*PER_PAGE;const fragment=document.createDocumentFragment();
+  for(const p of shown.slice(start,start+PER_PAGE)){
+    const tr=document.createElement("tr");
+    const fields=[p.name,p.team,p.pos,p.games,p.points.toFixed(1),p.fga.toFixed(1),p.fta.toFixed(1),p.ts===null?"—":(100*p.ts).toFixed(1)+"%",p.plus===null?"—":p.plus.toFixed(1),p.diff===null?"—":(p.diff>=0?"+":"")+p.diff.toFixed(1)];
+    fields.forEach((v,i)=>{const td=document.createElement("td");td.textContent=v;if(i===0)td.className="player";if(i===8||i===9)td.className=p.diff===null?"average":p.diff>0?"good":p.diff<0?"bad":"average";tr.appendChild(td)});
+    fragment.appendChild(tr)
+  }
+  el("rows").replaceChildren(fragment);
+  el("shown").textContent=shown.length.toLocaleString()+" players • showing "+(shown.length?start+1:0)+"–"+Math.min(start+PER_PAGE,shown.length);
+  el("page").textContent=(page+1)+" / "+Math.max(1,Math.ceil(shown.length/PER_PAGE));
+  el("prev").disabled=page===0;el("next").disabled=(page+1)*PER_PAGE>=shown.length;
+}
+function filter(){
+  const q=el("search").value.toLowerCase().trim(),t=el("team").value,min=Number(el("minimum").value);
+  shown=players.filter(p=>(!q||(p.name+" "+p.team).toLowerCase().includes(q))&&(!t||p.team===t)&&p.games>=min);
+  shown.sort((a,b)=>{const av=a[key],bv=b[key];if(av===null)return 1;if(bv===null)return -1;const cmp=typeof av==="string"?av.localeCompare(bv):av-bv;return desc?-cmp:cmp});
+  page=0;render();
+}
+function load(data){
+  const selected=new Map();const totals=/^(?:[2-9]TM|TOT)$/;
+  for(const r of data){
+    const name=(r.Player||"").replace(/\*/g,"").trim(),team=(r.Team||"").trim();if(!name||name==="Player")continue;
+    const p={name,team,pos:r.Pos||"—",games:num(r.G),points:num(r.PTS),fga:num(r.FGA),fta:num(r.FTA)};
+    const old=selected.get(name);if(!old||(totals.test(team)&&!totals.test(old.team))||(!totals.test(old.team)&&p.games>old.games))selected.set(name,p);
+  }
+  players=[...selected.values()].map(p=>{const attempts=p.fga+.44*p.fta,ts=attempts>0?p.points/(2*attempts):null;return {...p,ts,plus:ts===null?null:100*ts/BASELINE,diff:ts===null?null:100*(ts-BASELINE)}});
+  el("count").textContent=players.length.toLocaleString();
+  const teams=[...new Set(players.map(p=>p.team))].sort();for(const t of teams){const o=document.createElement("option");o.value=t;o.textContent=t;el("team").appendChild(o)}
+  el("status").textContent="2025–26 regular-season players loaded.";filter();
+}
+for(const id of ["search","team","minimum"])el(id).addEventListener(id==="search"?"input":"change",filter);
+document.querySelectorAll("th[data-k]").forEach(th=>th.addEventListener("click",()=>{const k=th.dataset.k;desc=k===key?!desc:!["name","team","pos"].includes(k);key=k;filter()}));
+el("prev").onclick=()=>{if(page){page--;render()}};el("next").onclick=()=>{if((page+1)*PER_PAGE<shown.length){page++;render()}};
+el("export").onclick=()=>{
+  if(!shown.length)return;
+  const cols=["name","team","pos","games","points","fga","fta","ts","plus","diff"],head=["Player","Team","Position","Games","PPG","FGA per Game","FTA per Game","TS% (decimal)","TS+","TS vs League (pp)"];
+  const lines=[head.join(",")];for(const p of shown){lines.push(cols.map(k=>'"'+String(p[k]??"").replace(/"/g,'""')+'"').join(","))}
+  const url=URL.createObjectURL(new Blob([lines.join("\n")],{type:"text/csv;charset=utf-8"}));const a=document.createElement("a");a.href=url;a.download="hoopmetrics-2025-26-ts-plus.csv";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+};
+fetch(DATA_URL).then(r=>{if(!r.ok)throw Error("HTTP "+r.status);return r.text()}).then(s=>load(parseCSV(s))).catch(e=>{el("status").textContent="Could not load the player dataset: "+e.message;el("status").className="error"});
+</script>
+</body></html>
