@@ -69,3 +69,36 @@ A genuine generative AI assistant should use a **server-side** endpoint that han
 - Mobile-friendly layout; no permanent desktop sidebar.
 
 The assistant is still a rules-based query engine using the season dataset, **not a generative AI model**.
+
+## Real AI mode (requires deployment)
+
+HoopMetrics now includes an **optional secure AI backend** in `backend/`, using the OpenAI Responses API and controlled tool calls over the 2025–26 player datasets. With this mode enabled, the assistant can interpret multi-condition questions, request additional data for an answer, compare players, and understand recent follow-up context. No model can guarantee an accurate answer to literally every question; unsupported data sources are explicitly identified.
+
+**Current website default:** The existing browser-based stats-query parser continues to run until a secure AI backend is deployed and connected. The AI feature is **not active** just because the code exists in GitHub.
+
+### Deploy the backend
+
+1. In your Render dashboard, create a **Blueprint** from your `8bitgolfer/HoopMetrics` repository using the checked-in `render.yaml`. Alternatively, create a Node Web Service with root directory `backend`, build command `npm install`, start command `npm start`.
+2. On Render, set the **secret environment variable** `OPENAI_API_KEY` to an API key created in your own OpenAI API account. **Never commit, paste, or send the key to the chatbot or a public repository.**
+3. Keep `OPENAI_MODEL=gpt-5-mini` (or set it to a compatible Responses API model available in your account), and `ALLOWED_ORIGIN=https://8bitgolfer.github.io`.
+4. After Render deployment succeeds, verify the endpoint `https://YOUR-RENDER-SERVICE.onrender.com/health` returns `{"ok":true,...,"aiConfigured":true}`.
+5. Edit the public `ai-config.js` file to set `window.HOOPMETRICS_AI_API = "https://YOUR-RENDER-SERVICE.onrender.com";`. This is a public server address, **not** an API key.
+6. Refresh the GitHub Pages site. The chatbot indicator should display **AI CONNECTED** instead of **STATS MODE**.
+
+### Security and cost
+
+- Responses API calls are **billed separately** from ChatGPT subscriptions; check your API account billing and usage.
+- Never expose the API key to client-side JavaScript.
+- CORS is restricted to the configured GitHub Pages origin.
+- The backend currently applies basic in-memory per-IP (12 per 10 minutes) and global (300 per day) limits. For public production use, add durable rate limiting, login/bot protection, monitoring, and account-level spending limits. In-memory limits reset on restarts and do not protect against multiple instances.
+- The dataset comes from a third-party public GitHub source and is cached for 24 hours. It contains 2025–26 regular-season data, not real-time 2026–27 stats.
+- The browser sends recent chat messages to the configured server for conversational context; do not enter personal or private data.
+
+### Basic tests
+
+- Ask: "Which guards scored at least 20 PPG with TS+ above 110 and usage over 25%?"
+- Follow with: "Of those, who had the lowest turnover percentage?"
+- Ask: "Compare Nikola Jokic and Shai Gilgeous-Alexander in scoring efficiency, BPM and playmaking."
+- Ask about unavailable 2026–27 data; the AI should disclose that the connected source covers 2025–26.
+
+**The deployed AI server, API key and billing remain yours to configure.**
