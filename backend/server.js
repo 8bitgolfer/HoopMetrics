@@ -2,12 +2,12 @@ import http from "node:http";
 import OpenAI from "openai";
 
 const PORT=Number(process.env.PORT||3000);
-const API_KEY=process.env.OPENAI_API_KEY;
-const MODEL=process.env.OPENAI_MODEL||"gpt-5-mini";
+const API_KEY=process.env.GEMINI_API_KEY;
+const MODEL=process.env.GEMINI_MODEL||"gemini-2.5-flash";
 const ORIGIN=process.env.ALLOWED_ORIGIN||"https://8bitgolfer.github.io";
 const MAX_DAILY=Number(process.env.MAX_DAILY_REQUESTS||300);
 const base="https://raw.githubusercontent.com/Baileyd18/NBA-Player-Impact-and-Value-Dashboard-2025-26/main/Data/";
-const client=API_KEY?new OpenAI({apiKey:API_KEY}):null;
+const client=API_KEY?new OpenAI({apiKey:API_KEY,baseURL:"https://generativelanguage.googleapis.com/v1beta/openai/"}):null;
 let cache=null,loadedAt=0,totalCalls=0,day=new Date().toISOString().slice(0,10);
 const traffic=new Map();
 function num(v){const z=Number(v);return v==null||v===""||!Number.isFinite(z)?null:z}
@@ -96,15 +96,27 @@ function json(res,code,obj,origin=ORIGIN){res.writeHead(code,{"content-type":"ap
 function readBody(req){return new Promise((resolve,reject)=>{let str="";req.on("data",chunk=>{str+=chunk;if(str.length>12000){reject(Error("Request too large"));req.destroy()}});req.on("end",()=>{try{resolve(JSON.parse(str))}catch{reject(Error("Invalid JSON"))}});req.on("error",reject)})}
 async function runChat(message,history){
  const players=await load();
- const input=[...history.filter(x=>x&&["user","assistant"].includes(x.role)&&typeof x.content==="string").slice(-10).map(x=>({role:x.role,content:x.content.slice(0,1500)})),{role:"user",content:message}];
+ const messages=[{role:"system",content:instructions},
+ ...history.filter(x=>x&&["user","assistant"].includes(x.role)&&typeof x.content==="string").slice(-10).map(x=>({role:x.role,content:x.content.slice(0,1500)})),
+ {role:"user",content:message}];
+ const geminiTools=tools.map(t=>({type:"function",function:{name:t.name,description:t.description,parameters:t.parameters}}));
  for(let round=0;round<4;round++){
-  const response=await client.responses.create({model:MODEL,instructions,input,tools,store:false,max_output_tokens:1000});
-  input.push(...response.output);
-  const calls=response.output.filter(o=>o.type==="function_call");
-  if(!calls.length)return response.output_text||"I couldn't generate an answer from the available data.";
-  for(const call of calls){let result;try{result=answerTool(call.name,JSON.parse(call.arguments||"{}"),players)}catch(e){result={error:String(e.message)}}input.push({type:"function_call_output",call_id:call.call_id,output:JSON.stringify(result)})}
+  const response=await client.chat.completions.create({
+   model:MODEL,messages,tools:geminiTools,tool_choice:"auto",max_tokens:1400
+  });
+  const msg=response.choices?.[0]?.message;
+  if(!msg)return "The AI provider did not return a response.";
+  const calls=msg.tool_calls||[];
+  if(!calls.length)return msg.content||"I couldn't generate an answer from the available data.";
+  messages.push({role:"assistant",content:msg.content||null,tool_calls:calls});
+  for(const call of calls){
+   let result;
+   try{result=answerTool(call.function.name,JSON.parse(call.function.arguments||"{}"),players)}
+   catch(e){result={error:String(e.message)}}
+   messages.push({role:"tool",tool_call_id:call.id,content:JSON.stringify(result)});
+  }
  }
- return "That request needs more analysis steps than this session permits. Please narrow the question.";
+ return "That question needs more analysis steps than this session permits. Please narrow the request.";
 }
 const server=http.createServer(async(req,res)=>{
  const origin=req.headers.origin||"";
@@ -112,7 +124,7 @@ const server=http.createServer(async(req,res)=>{
  if(req.url==="/health"&&req.method==="GET")return json(res,200,{ok:true,model:MODEL,aiConfigured:!!client},origin===ORIGIN?ORIGIN:"null");
  if(req.url!=="/api/chat"||req.method!=="POST")return json(res,404,{error:"Not found"},"null");
  if(origin!==ORIGIN)return json(res,403,{error:"Origin not permitted"},"null");
- if(!client)return json(res,503,{error:"AI server not configured. Set OPENAI_API_KEY."},ORIGIN);
+ if(!client)return json(res,503,{error:"AI server not configured. Set GEMINI_API_KEY."},ORIGIN);
  const today=new Date().toISOString().slice(0,10);if(today!==day){day=today;totalCalls=0;traffic.clear()}
  const ip=String(req.headers["x-forwarded-for"]||req.socket.remoteAddress||"anonymous").split(",")[0].trim();
  const bucket=traffic.get(ip)||{count:0,reset:Date.now()+600000};
