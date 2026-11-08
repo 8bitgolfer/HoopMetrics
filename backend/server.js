@@ -3,7 +3,7 @@ import OpenAI from "openai";
 
 const PORT=Number(process.env.PORT||3000);
 const API_KEY=process.env.GEMINI_API_KEY;
-const MODEL=process.env.GEMINI_MODEL||"gemini-2.5-flash";
+const MODEL=process.env.GEMINI_MODEL||"gemini-3.5-flash-lite";
 const ORIGIN=process.env.ALLOWED_ORIGIN||"https://8bitgolfer.github.io";
 const MAX_DAILY=Number(process.env.MAX_DAILY_REQUESTS||300);
 const base="https://raw.githubusercontent.com/Baileyd18/NBA-Player-Impact-and-Value-Dashboard-2025-26/main/Data/";
