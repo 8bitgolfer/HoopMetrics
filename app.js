@@ -278,7 +278,7 @@ async function ask(q){
  }finally{asking=false;if(submit)submit.disabled=false}
 }
 async function checkAiStatus(){
- const endpoint=(window.HOOPMETRICS_AI_API||"").trim().replace(/\\/$/,"");
+ const endpoint=(window.HOOPMETRICS_AI_API||"").trim().replace(/\/$/,"");
  const status=$("aiStatus");
  if(!endpoint){status.textContent="STATS MODE";return}
  const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),13000);
