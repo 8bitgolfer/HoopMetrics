@@ -43,3 +43,8 @@
 @media(max-width:1100px){.filters{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:790px){.topbar{gap:8px;height:auto;min-height:66px;padding:12px 16px;flex-wrap:wrap}.topnav{order:3;min-width:100%;justify-content:flex-start;padding-top:6px}.topnav .navitem{padding:10px 12px}.topright{margin-left:auto}.main{padding:25px 16px}.filters{grid-template-columns:repeat(2,minmax(0,1fr))}.floating-chat{bottom:15px;right:15px}.leaderboard-actions{padding:13px 17px}}
 @media(max-width:540px){.filters{grid-template-columns:1fr}.leaderboard-actions{align-items:flex-start;flex-direction:column}.columns-panel{left:0;right:auto}.profile-section{margin:10px 15px}.profile-foot{margin:16px}.floating-chat span{display:none}.floating-chat{border-radius:50%;width:48px;height:48px;padding:0;justify-content:center;font-size:21px}}
+
+/* Readable AI answers with safely rendered Markdown emphasis */
+.bubble.bot strong{font-weight:750;color:#ecfff7}
+.bubble.bot em{font-style:italic;color:#c2dfd8}
+.bubble.bot code{background:#0e202b;border:1px solid #2f4650;border-radius:4px;padding:1px 4px;font-size:.93em;color:#c1f4e6}
