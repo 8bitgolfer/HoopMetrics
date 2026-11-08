@@ -1,6 +1,7 @@
 "use strict";
 const URL_BASE="https://raw.githubusercontent.com/Baileyd18/NBA-Player-Impact-and-Value-Dashboard-2025-26/main/Data/";
-const LEAGUE_TS=.581,LEAGUE_EFG=.546,PER_PAGE=35;
+let LEAGUE_TS=.581,LEAGUE_EFG=.546;
+const PER_PAGE=35;
 const $=id=>document.getElementById(id);
 const val=(v)=>v===undefined||v===null||v===""?null:(Number.isFinite(Number(v))?Number(v):null);
 const n=(v)=>val(v)??0;
@@ -22,7 +23,7 @@ const METRICS={
  bpm:{label:"Box plus/minus"},obpm:{label:"Offensive box plus/minus"},vorp:{label:"Value over replacement player"},ws:{label:"Win shares"},ws48:{label:"Win shares per 48 minutes"},ows:{label:"Offensive win shares"},per:{label:"Player efficiency rating"}
 };
 const LOW_BETTER=new Set(["tov","tovpct"]); // lower TOV% is favorable but not a stand-alone impact ranking
-const state={players:[],eligible:[],filtered:[],sort:"plus",desc:true,cat:"scoring",page:0,loading:true,columns:{}};
+const state={players:[],eligible:[],filtered:[],sort:"plus",desc:true,cat:"scoring",page:0,loading:true,columns:{},season:"2025-26",seasonCache:{},seasonSwitching:false};
 function parseCSV(text){
  const rows=[];let row=[],cell="",quoted=false;
  for(let i=0;i<text.length;i++){const ch=text[i];if(quoted){if(ch==='"'&&text[i+1]==='"'){cell+='"';i++}else if(ch==='"')quoted=false;else cell+=ch}
@@ -59,10 +60,10 @@ function buildPlayers(per,adv){
    bpm:val(a.BPM),obpm:val(a.OBPM),dbpm:val(a.DBPM),vorp:val(a.VORP),
    ws:val(a.WS),ws48:val(a["WS/48"]),ows:val(a.OWS),dws:val(a.DWS),per:val(a.PER)
   };
-  p.role=p.games?100*p.starts/p.games:0;p.qualified=p.games>=41&&p.tsa>=500;
+  p.role=p.games?100*p.starts/p.games:0;p.qualified=p.games>=41&&p.tsa>=500;p.season="2025-26";
   players.push(p)
  }
- state.players=players;state.eligible=players.filter(p=>p.qualified);populateSelectors();renderAll();
+ state.players=players;state.eligible=players.filter(p=>p.qualified);state.seasonCache["2025-26"]=players;populateSelectors();renderAll();
 }
 function percentile(metric,value){
  if(value===null||!Number.isFinite(value))return null;
@@ -74,7 +75,7 @@ function percentile(metric,value){
 }
 function renderAll(){state.loading=false;filter();renderMethods();fillDatalist();renderColumnOptions();}
 function populateSelectors(){
- const team=$("team");for(const t of [...new Set(state.players.map(p=>p.team))].sort()){const opt=document.createElement("option");opt.value=t;opt.textContent=t;team.appendChild(opt)}
+ const team=$("team");team.innerHTML='<option value="">All teams</option>';for(const t of [...new Set(state.players.map(p=>p.team))].filter(Boolean).sort()){const opt=document.createElement("option");opt.value=t;opt.textContent=t;team.appendChild(opt)}
 }
 function posMatch(p,v){if(!v)return true;const positions=p.pos.split(/[-/]/);if(v==="guards")return positions.some(x=>["PG","SG"].includes(x));if(v==="wings")return positions.some(x=>["SG","SF"].includes(x));if(v==="bigs")return positions.some(x=>["PF","C"].includes(x));return positions.includes(v)}
 function roleMatch(p,v){if(!v)return true;const r=p.role;return v==="full"?r>=80:v==="mostly"?r>=50&&r<80:v==="hybrid"?r>=20&&r<50:v==="mostlybench"?r>0&&r<20:r===0}
@@ -157,6 +158,49 @@ function renderMethods(){
  ];
  $("methodContent").innerHTML=blocks.map(([title,formula,desc])=>"<div class='method-card'><h3>"+safe(title)+"</h3><code>"+safe(formula)+"</code><p>"+safe(desc)+"</p></div>").join("")+"<div class='method-card'><h3>Original datasets</h3><p><a href='https://github.com/Baileyd18/NBA-Player-Impact-and-Value-Dashboard-2025-26/tree/main/Data' target='_blank' rel='noopener'>Player data repository ↗</a><br><a href='https://www.basketball-reference.com/leagues/NBA_stats_per_game.html' target='_blank' rel='noopener'>2025–26 league benchmarks ↗</a><br><a href='https://www.basketball-reference.com/about/glossary.html' target='_blank' rel='noopener'>Statistical glossary ↗</a></p></div>";
 }
+
+function cohortFor(p){
+ const pos=p.pos.split(/[-/]/)[0];
+ const type=["PG","SG"].includes(pos)?"guard":["SF"].includes(pos)?"wing":["PF","C"].includes(pos)?"big":null;
+ let pool=state.eligible.filter(x=>{
+  const xPos=x.pos.split(/[-/]/)[0];
+  return type==="guard"?["PG","SG"].includes(xPos):type==="wing"?xPos==="SF":type==="big"?["PF","C"].includes(xPos):false;
+ });
+ if(pool.length<15)pool=state.eligible;
+ return {pool,type:type||"all"};
+}
+function statPctFor(pool,metric,value){
+ if(value===null||!Number.isFinite(value))return null;
+ const vals=pool.map(p=>p[metric]).filter(v=>v!==null&&Number.isFinite(v));
+ if(vals.length<12)return null;
+ let below=0,tie=0;
+ for(const v of vals){if(v<value-1e-9)below++;else if(Math.abs(v-value)<1e-9)tie++}
+ const rank=100*(below+tie/2)/vals.length;
+ return LOW_BETTER.has(metric)?100-rank:rank;
+}
+function scoutingSnapshot(p){
+ const group=cohortFor(p);
+ const metrics=[
+  ["plus","Scoring efficiency"],["points","Scoring volume"],["astpct","Playmaking"],["astto","Assist/turnover ratio"],
+  ["tovpct","Ball security"],["drb","Def. rebounding"],["orb","Off. rebounding"],["stlpct","Steal activity"],
+  ["blkpct","Block activity"],["bpm","Box-score impact"]
+ ];
+ const evaluated=metrics.map(([k,label])=>({k,label,pct:statPctFor(group.pool,k,p[k])})).filter(x=>x.pct!==null);
+ const strength=evaluated.filter(x=>x.pct>=75).sort((a,b)=>b.pct-a.pct).slice(0,4);
+ const middle=evaluated.filter(x=>x.pct>=40&&x.pct<60).sort((a,b)=>Math.abs(a.pct-50)-Math.abs(b.pct-50)).slice(0,3);
+ const weak=evaluated.filter(x=>x.pct<25).sort((a,b)=>a.pct-b.pct).slice(0,3);
+ const groupSection=(title,items,cls)=>"<div class='scouting-group'><h4>"+title+"</h4><div class='scouting-tags'>"+
+ (items.length?items.map(x=>"<span class='scouting-chip "+cls+"'>"+safe(x.label)+" · "+f(x.pct,0)+"th pct</span>").join(""):"<span class='scouting-chip'>No clear indicators from available stats</span>")+
+ "</div></div>";
+ const groupName=group.type==="all"?"qualified players":group.type==="big"?"qualified bigs":group.type==="guard"?"qualified guards":"qualified wings";
+ return "<section class='scouting-overview'><h3>Statistical scouting snapshot</h3><p class='scouting-description'>Compared with "+safe(groupName)+" in "+safe(state.season)+"."+
+ (state.season==="2026-27"?" Small early-season sample; results can change rapidly.":"")+
+ " Percentiles are descriptive, not scouting grades. Box-score data cannot establish perimeter defense or shot quality.</p>"+
+ groupSection("Standout areas · 75th+ percentile",strength,"strong")+
+ groupSection("Middle of the pack · 40th–60th",middle,"mid")+
+ groupSection("Below peers · under 25th",weak,"weak")+"</section>";
+}
+
 function openProfile(id){
  const p=state.players.find(x=>x.id===id);if(!p)return;
  const groups=[
@@ -166,7 +210,7 @@ function openProfile(id){
  ["IMPACT",["bpm","obpm","dbpm","vorp"]]];
  const summary="<div class='profile-main'><h2 class='profile-name'>"+safe(p.name)+"</h2><div class='profile-sub'>"+safe(p.team)+" · "+safe(p.pos)+" · "+p.games+" GP · "+p.starts+" starts · "+f(p.mpg)+" MPG</div><div class='profile-stats'>"+[["PPG",metricText("points",p.points)],["TS+",metricText("plus",p.plus)],["BPM",metricText("bpm",p.bpm)]].map(([label,value])=>"<div class='mini-stat'><label>"+label+"</label><strong>"+value+"</strong></div>").join("")+"</div>";
  const details=groups.map(([title,keys],i)=>"<details class='profile-section' "+(i===0?"open":"")+"><summary>"+title+" <span>"+keys.length+" stats ▾</span></summary><div class='profile-section-body'>"+keys.map(k=>{const pct=percentile(k,p[k]);return "<div class='metric-bar'><div class='metric-label'><b>"+safe(METRICS[k].label)+" <span>"+metricText(k,p[k])+"</span></b><span>"+(pct===null?"n/a":f(pct,0)+"th pct")+"</span></div><div class='bar-track'><div class='bar-fill' style='width:"+(pct===null?0:pct)+"%'></div></div></div>"}).join("")+"</div></details>").join("");
- $("profileContent").innerHTML=summary+details+"<div class='profile-foot'>Percentiles use qualified 2025–26 players (41+ GP, 500+ estimated TSA). Box-score defense and BPM have important limitations.</div></div>";
+ $("profileContent").innerHTML=summary+scoutingSnapshot(p)+details+"<div class='profile-foot'>Percentiles use qualified " + (state.season==="2026-27"?"2026–27 players (5+ GP, 75+ TSA)":"2025–26 players (41+ GP, 500+ TSA)") + ". Box-score defense and advanced metrics have important limitations.</div></div>";
  $("drawerBackdrop").classList.remove("hidden");$("profileDrawer").classList.remove("hidden");document.body.style.overflow="hidden";
 }
 function closeProfile(){$("drawerBackdrop").classList.add("hidden");$("profileDrawer").classList.add("hidden");document.body.style.overflow=""}
@@ -186,7 +230,7 @@ function resetFilters(){
 function exportData(){
  const columns=["name","team","pos","games","starts","mpg",...category[state.cat].map(c=>c[0])];
  const csv=[columns.join(","),...state.filtered.map(p=>columns.map(k=>'"'+String(p[k]??"").replace(/"/g,'""')+'"').join(","))].join("\n");
- const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="hoopmetrics-2025-26-"+state.cat+".csv";a.click();setTimeout(()=>URL.revokeObjectURL(url),500);
+ const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="hoopmetrics-"+state.season+"-"+state.cat+".csv";a.click();setTimeout(()=>URL.revokeObjectURL(url),500);
 }
 function guessMetric(q){
  if(/assist.{0,12}turnover|ast\s*\/\s*to|ast.to|passing efficiency/.test(q))return "astto";
@@ -279,7 +323,7 @@ async function ask(q){
   if(backend){
    const controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),45000);
    try{
-    const response=await fetch(backend+"/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({message:q,history}),signal:controller.signal});
+    const response=await fetch(backend+"/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({message:q,history,season:state.season}),signal:controller.signal});
     const data=await response.json();if(!response.ok)throw Error(data.error||"AI server unavailable");answer=data.answer;
    }finally{clearTimeout(timeout)}
   }else{
@@ -308,8 +352,66 @@ async function checkAiStatus(){
   status.title="Could not reach the Render AI backend. Check deployment status or try again after the service starts.";
  }finally{clearTimeout(timer)}
 }
+
+async function switchSeason(season){
+ if(!["2025-26","2026-27"].includes(season)||state.seasonSwitching)return;
+ if(season===state.season)return;
+ const previous=state.season;
+ state.seasonSwitching=true;
+ document.querySelectorAll(".season-option").forEach(b=>b.disabled=true);
+ const notice=$("seasonNotice");
+ notice.textContent=season==="2026-27"?"Loading 2026–27 player totals…":"Loading 2025–26 season…";
+ try{
+  let players=state.seasonCache[season];
+  let meta;
+  if(!players){
+   if(season==="2026-27"){
+    const response=await fetch("https://hoopmetrics-ai.onrender.com/api/season/2026-27",{cache:"no-store"});
+    const json=await response.json();
+    if(!response.ok)throw Error(json.error||"Live season data unavailable");
+    if(!Array.isArray(json.players)||json.players.length<100)throw Error("The live feed is incomplete");
+    players=json.players.map(p=>({ ...p,id:norm(p.name),age:p.age??null,role:p.role??0,season:"2026-27" }));
+    state.seasonCache[season]=players;
+    state.seasonCache.liveMeta={leagueTS:json.leagueTS,leagueEFG:json.leagueEFG,updatedAt:json.updatedAt};
+   }else throw Error("Completed season data is still loading");
+  }
+  state.season=season;
+  const benchmark=state.seasonCache.liveMeta;
+  LEAGUE_TS=season==="2026-27"?(benchmark?.leagueTS||.581):.581;
+  LEAGUE_EFG=season==="2026-27"?(benchmark?.leagueEFG||.546):.546;
+  state.players=players;
+  state.eligible=players.filter(p=>p.qualified);
+  state.page=0;
+  $("team").value="";
+  $("games").value=season==="2026-27"?"5":"41";
+  $("tsa").value="0";
+  document.querySelectorAll(".season-option").forEach(b=>{
+    const active=b.dataset.season===season;b.classList.toggle("active",active);b.setAttribute("aria-pressed",String(active));
+  });
+  if($("seasonEyebrow"))$("seasonEyebrow").textContent=(season==="2026-27"?"2026–27 NBA REGULAR SEASON · IN PROGRESS":"2025–26 NBA REGULAR SEASON · COMPLETE");
+  if($("drawerSeasonLabel"))$("drawerSeasonLabel").textContent="PLAYER BREAKDOWN · "+season.replace("-", "–");
+  if($("chatSeasonLabel"))$("chatSeasonLabel").textContent=season.replace("-", "–")+" player database · conversational analytics";
+  if(season==="2026-27"){
+   notice.innerHTML="Early season • 5+ games / 75+ TSA qualify for percentiles. TS+ uses the current player-pool shooting baseline. BPM, VORP, and win shares are unavailable in this feed. Data: <a href='https://www.boxscorelab.com/downloads/' target='_blank' rel='noopener'>BoxScore Lab</a> (CC BY 4.0).";
+  }else notice.textContent="Completed season • 41+ games / 500+ estimated TSA qualify for percentiles.";
+  closeProfile();
+  populateSelectors();
+  renderAll();
+  $("chatLog").innerHTML="";
+  addBubble("Showing "+season.replace("-", "–")+" stats. Ask about players from this season.", "bot");
+  chatHistory.length=0;
+ }catch(error){
+  console.error("Season switch failed:",error);
+  notice.textContent="Could not load "+season+": "+error.message+". Still showing "+previous+".";
+ }finally{
+  state.seasonSwitching=false;
+  document.querySelectorAll(".season-option").forEach(b=>b.disabled=false);
+ }
+}
+
 function boot(){
  // Remove legacy suggestion chips even if cached HTML still contains them.
+ document.querySelectorAll(".season-option").forEach(b=>b.addEventListener("click",()=>switchSeason(b.dataset.season)));
  const legacyPrompts=document.getElementById("prompts");
  if(legacyPrompts)legacyPrompts.remove();
  $("aiStatus").textContent="CHECKING AI";
